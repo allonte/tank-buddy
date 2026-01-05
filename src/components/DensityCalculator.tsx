@@ -50,13 +50,13 @@ const DensityCalculator = ({ onDensityChange }: DensityCalculatorProps) => {
         <Slider
           value={[temperature]}
           onValueChange={handleTemperatureChange}
-          min={15.5}
+          min={0}
           max={30.0}
           step={0.5}
           className="w-full"
         />
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>15.5°C</span>
+          <span>0°C</span>
           <span>30.0°C</span>
         </div>
       </div>
