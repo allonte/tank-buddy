@@ -3,6 +3,42 @@
 
 export const SPECIFIC_GRAVITY_VALUES = [0.500, 0.510, 0.520, 0.530, 0.540, 0.550, 0.560, 0.570, 0.580, 0.590];
 
+// Volume Correction Factors (0°C - 15°C)
+export const VOLUME_CORRECTION_TABLE: Record<number, number[]> = {
+  0.0: [1.070, 1.065, 1.060, 1.059, 1.056, 1.051, 1.050, 1.047, 1.046, 1.042],
+  0.5: [1.068, 1.063, 1.059, 1.058, 1.054, 1.050, 1.049, 1.045, 1.045, 1.041],
+  1.0: [1.066, 1.061, 1.057, 1.056, 1.053, 1.048, 1.048, 1.044, 1.044, 1.040],
+  1.5: [1.064, 1.060, 1.056, 1.055, 1.051, 1.047, 1.046, 1.043, 1.042, 1.039],
+  2.0: [1.062, 1.058, 1.054, 1.053, 1.050, 1.046, 1.045, 1.042, 1.041, 1.038],
+  2.5: [1.060, 1.056, 1.052, 1.052, 1.048, 1.044, 1.044, 1.041, 1.040, 1.037],
+  3.0: [1.059, 1.055, 1.051, 1.050, 1.047, 1.043, 1.043, 1.039, 1.039, 1.036],
+  3.5: [1.057, 1.053, 1.049, 1.048, 1.045, 1.042, 1.041, 1.038, 1.038, 1.034],
+  4.0: [1.055, 1.051, 1.048, 1.047, 1.044, 1.040, 1.040, 1.037, 1.036, 1.033],
+  4.5: [1.053, 1.050, 1.046, 1.045, 1.043, 1.039, 1.039, 1.036, 1.035, 1.032],
+  5.0: [1.051, 1.048, 1.045, 1.044, 1.041, 1.038, 1.037, 1.035, 1.034, 1.031],
+  5.5: [1.049, 1.046, 1.043, 1.042, 1.040, 1.037, 1.036, 1.033, 1.033, 1.030],
+  6.0: [1.048, 1.045, 1.041, 1.041, 1.038, 1.035, 1.035, 1.032, 1.032, 1.029],
+  6.5: [1.046, 1.043, 1.040, 1.039, 1.037, 1.034, 1.033, 1.031, 1.031, 1.028],
+  7.0: [1.044, 1.041, 1.038, 1.038, 1.035, 1.033, 1.032, 1.030, 1.029, 1.027],
+  7.5: [1.042, 1.040, 1.037, 1.036, 1.034, 1.031, 1.031, 1.029, 1.028, 1.026],
+  8.0: [1.041, 1.038, 1.035, 1.035, 1.033, 1.030, 1.030, 1.027, 1.027, 1.025],
+  8.5: [1.039, 1.036, 1.034, 1.033, 1.031, 1.029, 1.028, 1.026, 1.026, 1.024],
+  9.0: [1.037, 1.035, 1.032, 1.032, 1.030, 1.027, 1.027, 1.025, 1.025, 1.023],
+  9.5: [1.035, 1.033, 1.031, 1.030, 1.028, 1.026, 1.026, 1.024, 1.024, 1.022],
+  10.0: [1.034, 1.031, 1.029, 1.029, 1.027, 1.025, 1.025, 1.023, 1.022, 1.021],
+  10.5: [1.032, 1.030, 1.028, 1.027, 1.026, 1.024, 1.023, 1.022, 1.021, 1.020],
+  11.0: [1.030, 1.028, 1.026, 1.026, 1.024, 1.022, 1.022, 1.020, 1.020, 1.019],
+  11.5: [1.028, 1.027, 1.025, 1.024, 1.023, 1.021, 1.021, 1.019, 1.019, 1.017],
+  12.0: [1.027, 1.025, 1.023, 1.023, 1.022, 1.020, 1.020, 1.018, 1.018, 1.016],
+  12.5: [1.025, 1.023, 1.022, 1.021, 1.020, 1.019, 1.018, 1.017, 1.017, 1.015],
+  13.0: [1.023, 1.022, 1.020, 1.020, 1.019, 1.017, 1.017, 1.016, 1.016, 1.014],
+  13.5: [1.022, 1.020, 1.019, 1.019, 1.017, 1.016, 1.016, 1.015, 1.015, 1.013],
+  14.0: [1.020, 1.019, 1.017, 1.017, 1.016, 1.015, 1.015, 1.014, 1.013, 1.012],
+  14.5: [1.018, 1.017, 1.016, 1.016, 1.015, 1.014, 1.013, 1.012, 1.012, 1.011],
+  15.0: [1.017, 1.015, 1.014, 1.014, 1.013, 1.012, 1.012, 1.011, 1.011, 1.010],
+};
+
+// Density Correction Factors (15.5°C - 30°C)
 export const DENSITY_TABLE: Record<number, number[]> = {
   15.5: [1.015, 1.014, 1.013, 1.013, 1.012, 1.011, 1.011, 1.010, 1.010, 1.009],
   16.0: [1.013, 1.012, 1.012, 1.011, 1.011, 1.010, 1.010, 1.009, 1.009, 1.008],
@@ -36,15 +72,21 @@ export const DENSITY_TABLE: Record<number, number[]> = {
   30.0: [0.969, 0.970, 0.972, 0.973, 0.974, 0.976, 0.977, 0.978, 0.978, 0.980],
 };
 
-export const TEMPERATURES = Object.keys(DENSITY_TABLE).map(Number).sort((a, b) => a - b);
+// Combined table for full temperature range (0°C - 30°C)
+export const COMBINED_TABLE: Record<number, number[]> = {
+  ...VOLUME_CORRECTION_TABLE,
+  ...DENSITY_TABLE,
+};
+
+export const TEMPERATURES = Object.keys(COMBINED_TABLE).map(Number).sort((a, b) => a - b);
 
 /**
  * Lookup density correction factor based on temperature and specific gravity
  * Uses linear interpolation for values between table entries
  */
 export function lookupDensity(temperature: number, specificGravity: number): number {
-  // Clamp values to table range
-  const clampedTemp = Math.max(15.5, Math.min(30.0, temperature));
+  // Clamp values to full table range (0°C - 30°C)
+  const clampedTemp = Math.max(0, Math.min(30.0, temperature));
   const clampedSG = Math.max(0.500, Math.min(0.590, specificGravity));
 
   // Find surrounding temperature rows
@@ -52,22 +94,22 @@ export function lookupDensity(temperature: number, specificGravity: number): num
   const lowerTempIdx = tempIndex === 0 ? 0 : tempIndex - 1;
   const upperTempIdx = tempIndex === -1 ? TEMPERATURES.length - 1 : tempIndex;
   
-  const lowerTemp = TEMPERATURES[lowerTempIdx];
-  const upperTemp = TEMPERATURES[upperTempIdx];
+  const lowerTemp = TEMPERATURES[lowerTempIdx] ?? TEMPERATURES[0];
+  const upperTemp = TEMPERATURES[upperTempIdx] ?? TEMPERATURES[TEMPERATURES.length - 1];
 
   // Find surrounding SG columns
   const sgIndex = SPECIFIC_GRAVITY_VALUES.findIndex(sg => sg >= clampedSG);
   const lowerSGIdx = sgIndex === 0 ? 0 : sgIndex - 1;
   const upperSGIdx = sgIndex === -1 ? SPECIFIC_GRAVITY_VALUES.length - 1 : sgIndex;
 
-  const lowerSG = SPECIFIC_GRAVITY_VALUES[lowerSGIdx];
-  const upperSG = SPECIFIC_GRAVITY_VALUES[upperSGIdx];
+  const lowerSG = SPECIFIC_GRAVITY_VALUES[lowerSGIdx] ?? SPECIFIC_GRAVITY_VALUES[0];
+  const upperSG = SPECIFIC_GRAVITY_VALUES[upperSGIdx] ?? SPECIFIC_GRAVITY_VALUES[SPECIFIC_GRAVITY_VALUES.length - 1];
 
-  // Get the four surrounding values
-  const v00 = DENSITY_TABLE[lowerTemp][lowerSGIdx];
-  const v01 = DENSITY_TABLE[lowerTemp][upperSGIdx];
-  const v10 = DENSITY_TABLE[upperTemp][lowerSGIdx];
-  const v11 = DENSITY_TABLE[upperTemp][upperSGIdx];
+  // Get the four surrounding values from combined table
+  const v00 = COMBINED_TABLE[lowerTemp][lowerSGIdx];
+  const v01 = COMBINED_TABLE[lowerTemp][upperSGIdx];
+  const v10 = COMBINED_TABLE[upperTemp][lowerSGIdx];
+  const v11 = COMBINED_TABLE[upperTemp][upperSGIdx];
 
   // Bilinear interpolation
   const tempRatio = upperTemp === lowerTemp ? 0 : (clampedTemp - lowerTemp) / (upperTemp - lowerTemp);
