@@ -6,6 +6,7 @@ import SpecificationCard from "@/components/SpecificationCard";
 import CapacityChart from "@/components/CapacityChart";
 import CertificateCard from "@/components/CertificateCard";
 import LevelSlider from "@/components/LevelSlider";
+import DensityCalculator from "@/components/DensityCalculator";
 
 // Tank 207 Data
 const TANK_DATA = {
@@ -134,6 +135,9 @@ const Index = () => {
               currentLevel={percentage}
               maxHeight={2237}
             />
+
+            {/* Density Calculator */}
+            <DensityCalculator />
           </div>
         </div>
 
