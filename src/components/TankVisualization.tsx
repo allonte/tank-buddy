@@ -1,10 +1,141 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
+import * as THREE from "three";
 
 interface TankVisualizationProps {
   level: number;
   capacity: number;
   unit?: string;
 }
+
+interface BulletTankProps {
+  fillPercentage: number;
+}
+
+const BulletTank = ({ fillPercentage }: BulletTankProps) => {
+  const tankRef = useRef<THREE.Group>(null);
+  const liquidRef = useRef<THREE.Group>(null);
+
+  // Animate rotation
+  useFrame((state) => {
+    if (tankRef.current) {
+      tankRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.3) * 0.1;
+    }
+  });
+
+  // Tank dimensions
+  const cylinderRadius = 1;
+  const cylinderLength = 4;
+  const hemisphereRadius = 1;
+
+  // Colors based on fill level
+  const getLiquidColor = () => {
+    if (fillPercentage <= 10) return "#c53030"; // Red/danger
+    if (fillPercentage <= 25) return "#d97706"; // Amber/warning
+    return "#2563eb"; // Blue (Murban blue)
+  };
+
+  const tankColor = "#e5e7eb"; // Light gray tank body
+  const strokeColor = "#991b1b"; // Murban red for accents
+
+  // Calculate liquid fill height (from bottom of tank)
+  const totalHeight = cylinderRadius * 2;
+  const fillHeight = (fillPercentage / 100) * totalHeight;
+  const liquidY = -cylinderRadius + fillHeight / 2;
+
+  return (
+    <group ref={tankRef} rotation={[0, 0, Math.PI / 2]}>
+      {/* Tank body - cylinder */}
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[cylinderRadius, cylinderRadius, cylinderLength, 32]} />
+        <meshStandardMaterial
+          color={tankColor}
+          transparent
+          opacity={0.4}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Left hemisphere */}
+      <mesh position={[-cylinderLength / 2, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
+        <sphereGeometry args={[hemisphereRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial
+          color={tankColor}
+          transparent
+          opacity={0.4}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Right hemisphere */}
+      <mesh position={[cylinderLength / 2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <sphereGeometry args={[hemisphereRadius, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial
+          color={tankColor}
+          transparent
+          opacity={0.4}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Tank wireframe outline */}
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[cylinderRadius * 1.001, cylinderRadius * 1.001, cylinderLength, 32]} />
+        <meshBasicMaterial color={strokeColor} wireframe />
+      </mesh>
+
+      {/* Liquid fill - using a clipped box for the main cylinder area */}
+      <group ref={liquidRef}>
+        {fillPercentage > 0 && (
+          <>
+            {/* Main liquid body */}
+            <mesh position={[0, liquidY, 0]}>
+              <boxGeometry args={[cylinderLength, fillHeight, cylinderRadius * 1.8]} />
+              <meshStandardMaterial
+                color={getLiquidColor()}
+                transparent
+                opacity={0.85}
+              />
+            </mesh>
+
+            {/* Liquid surface wave effect */}
+            <mesh position={[0, -cylinderRadius + fillHeight, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[cylinderRadius * 0.85, 32]} />
+              <meshStandardMaterial
+                color={getLiquidColor()}
+                transparent
+                opacity={0.95}
+                emissive={getLiquidColor()}
+                emissiveIntensity={0.2}
+              />
+            </mesh>
+          </>
+        )}
+      </group>
+
+      {/* Support legs */}
+      <mesh position={[-1.2, -cylinderRadius - 0.3, 0]}>
+        <boxGeometry args={[0.3, 0.6, 0.5]} />
+        <meshStandardMaterial color="#374151" />
+      </mesh>
+      <mesh position={[1.2, -cylinderRadius - 0.3, 0]}>
+        <boxGeometry args={[0.3, 0.6, 0.5]} />
+        <meshStandardMaterial color="#374151" />
+      </mesh>
+
+      {/* Top valve */}
+      <mesh position={[0, cylinderRadius + 0.2, 0]}>
+        <cylinderGeometry args={[0.15, 0.15, 0.4, 16]} />
+        <meshStandardMaterial color="#374151" />
+      </mesh>
+      <mesh position={[0, cylinderRadius + 0.45, 0]}>
+        <sphereGeometry args={[0.12, 16, 16]} />
+        <meshStandardMaterial color={strokeColor} />
+      </mesh>
+    </group>
+  );
+};
 
 const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationProps) => {
   const [animatedLevel, setAnimatedLevel] = useState(0);
@@ -17,105 +148,36 @@ const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationPro
     return () => clearTimeout(timer);
   }, [percentage]);
 
-  const getStatusColor = () => {
-    if (percentage <= 10) return "bg-danger";
-    if (percentage <= 25) return "bg-warning";
-    return "bg-tank-liquid";
-  };
-
   const getGlowColor = () => {
     if (percentage <= 10) return "shadow-[0_0_60px_hsl(0_72%_51%/0.4)]";
     if (percentage <= 25) return "shadow-[0_0_60px_hsl(38_92%_50%/0.4)]";
-    return "shadow-[0_0_60px_hsl(200_85%_50%/0.3)]";
+    return "shadow-[0_0_60px_hsl(225_55%_45%/0.3)]";
   };
 
   return (
     <div className="flex flex-col items-center gap-6">
-      {/* Bullet Tank SVG */}
-      <div className={`relative transition-all duration-700 ${getGlowColor()}`}>
-        <svg
-          viewBox="0 0 400 160"
-          className="w-full max-w-md h-auto"
-          style={{ filter: "drop-shadow(0 10px 30px rgba(0,0,0,0.5))" }}
+      {/* 3D Bullet Tank */}
+      <div className={`relative w-full h-64 rounded-xl overflow-hidden ${getGlowColor()}`}>
+        <Canvas
+          camera={{ position: [0, 2, 6], fov: 45 }}
+          style={{ background: "linear-gradient(180deg, hsl(220 15% 96%) 0%, hsl(220 15% 90%) 100%)" }}
         >
-          {/* Tank body - horizontal bullet shape */}
-          <defs>
-            <linearGradient id="tankGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(222 30% 25%)" />
-              <stop offset="50%" stopColor="hsl(222 30% 18%)" />
-              <stop offset="100%" stopColor="hsl(222 30% 12%)" />
-            </linearGradient>
-            <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(200 85% 60%)" />
-              <stop offset="50%" stopColor="hsl(200 75% 45%)" />
-              <stop offset="100%" stopColor="hsl(200 65% 35%)" />
-            </linearGradient>
-            <linearGradient id="warningGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(38 92% 60%)" />
-              <stop offset="100%" stopColor="hsl(38 92% 40%)" />
-            </linearGradient>
-            <linearGradient id="dangerGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(0 72% 60%)" />
-              <stop offset="100%" stopColor="hsl(0 72% 40%)" />
-            </linearGradient>
-            <clipPath id="tankClip">
-              <ellipse cx="50" cy="80" rx="30" ry="55" />
-              <rect x="50" y="25" width="300" height="110" />
-              <ellipse cx="350" cy="80" rx="30" ry="55" />
-            </clipPath>
-          </defs>
-
-          {/* Tank outline */}
-          <g clipPath="url(#tankClip)">
-            <rect x="0" y="0" width="400" height="160" fill="url(#tankGradient)" />
-            
-            {/* Liquid fill - animated from bottom */}
-            <rect
-              x="0"
-              y={160 - (animatedLevel / 100) * 130 - 15}
-              width="400"
-              height={(animatedLevel / 100) * 130 + 15}
-              fill={
-                percentage <= 10
-                  ? "url(#dangerGradient)"
-                  : percentage <= 25
-                  ? "url(#warningGradient)"
-                  : "url(#liquidGradient)"
-              }
-              className="transition-all duration-1000 ease-out"
-            />
-
-            {/* Wave effect on top of liquid */}
-            <ellipse
-              cx="200"
-              cy={160 - (animatedLevel / 100) * 130 - 15}
-              rx="180"
-              ry="8"
-              fill={
-                percentage <= 10
-                  ? "hsl(0 72% 65%)"
-                  : percentage <= 25
-                  ? "hsl(38 92% 65%)"
-                  : "hsl(200 85% 65%)"
-              }
-              className="animate-liquid-wave origin-center"
-              style={{ opacity: 0.6 }}
-            />
-          </g>
-
-          {/* Tank border */}
-          <ellipse cx="50" cy="80" rx="30" ry="55" fill="none" stroke="hsl(38 92% 55%)" strokeWidth="2" />
-          <rect x="50" y="25" width="300" height="110" fill="none" stroke="hsl(38 92% 55%)" strokeWidth="2" />
-          <ellipse cx="350" cy="80" rx="30" ry="55" fill="none" stroke="hsl(38 92% 55%)" strokeWidth="2" />
-
-          {/* Legs */}
-          <rect x="80" y="135" width="20" height="25" rx="3" fill="hsl(222 25% 22%)" stroke="hsl(38 92% 55%)" strokeWidth="1" />
-          <rect x="300" y="135" width="20" height="25" rx="3" fill="hsl(222 25% 22%)" stroke="hsl(38 92% 55%)" strokeWidth="1" />
-
-          {/* Top valve */}
-          <rect x="190" y="10" width="20" height="20" rx="2" fill="hsl(222 25% 22%)" stroke="hsl(38 92% 55%)" strokeWidth="1" />
-          <circle cx="200" cy="8" r="6" fill="hsl(38 92% 55%)" />
-        </svg>
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 5, 5]} intensity={1} />
+          <directionalLight position={[-5, 3, -5]} intensity={0.4} />
+          <pointLight position={[0, -2, 3]} intensity={0.3} color="#2563eb" />
+          
+          <BulletTank fillPercentage={animatedLevel} />
+          
+          <OrbitControls
+            enableZoom={false}
+            enablePan={false}
+            minPolarAngle={Math.PI / 4}
+            maxPolarAngle={Math.PI / 2}
+            autoRotate
+            autoRotateSpeed={0.5}
+          />
+        </Canvas>
       </div>
 
       {/* Level indicators */}
