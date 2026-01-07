@@ -5,12 +5,8 @@ import tankImage from "@/assets/tank-207.png";
 const TankView = () => {
   return (
     <div className="min-h-screen bg-background">
-      {/* Background pattern */}
-      <div className="fixed inset-0 opacity-30 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
-      </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <Link

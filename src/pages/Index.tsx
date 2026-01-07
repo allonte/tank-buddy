@@ -42,13 +42,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background pattern */}
-      <div className="fixed inset-0 opacity-30 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-transparent" />
-      </div>
-
-      <div className="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Header
           tankName={TANK_DATA.name}
           tankOwner={TANK_DATA.owner}
