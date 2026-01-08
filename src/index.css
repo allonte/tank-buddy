@@ -6,23 +6,23 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --background: 0 0% 98%;
+    --foreground: 220 20% 20%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 220 20% 20%;
 
-    --primary: 0 0% 15%;
+    --primary: 142 70% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 220 10% 94%;
+    --secondary-foreground: 220 20% 20%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 10% 96%;
+    --muted-foreground: 220 10% 45%;
 
     --accent: 210 100% 50%;
     --accent-foreground: 0 0% 100%;
@@ -30,35 +30,29 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 85%;
-    --input: 0 0% 85%;
-    --ring: 210 100% 50%;
+    --border: 220 10% 88%;
+    --input: 220 10% 88%;
+    --ring: 142 70% 40%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Custom tokens */
-    --tank-liquid: 145 70% 45%;
-    --tank-liquid-glow: 145 80% 55%;
-    --tank-empty: 0 0% 92%;
-    --success: 145 70% 45%;
+    --tank-liquid: 142 70% 45%;
+    --tank-liquid-glow: 142 80% 55%;
+    --tank-empty: 220 10% 92%;
+    --success: 142 70% 40%;
     --warning: 38 92% 50%;
     --danger: 0 72% 51%;
 
-    /* Gradients */
-    --gradient-tank: linear-gradient(180deg, hsl(145 80% 55%) 0%, hsl(145 70% 45%) 50%, hsl(145 60% 35%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(0 0% 96%) 100%);
-
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(145 70% 45% / 0.2);
-    --shadow-tank: 0 0 60px hsl(145 70% 45% / 0.25);
-    --shadow-card: 0 4px 24px hsl(0 0% 20% / 0.08);
+    --shadow-card: 0 1px 3px hsl(220 20% 20% / 0.08);
 
     /* Animation */
-    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 0 0% 8%;
+    --background: 220 20% 8%;
     --foreground: 0 0% 96%;
   }
 }
