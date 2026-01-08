@@ -20,9 +20,9 @@ interface DescriptionRowProps {
 }
 
 const DescriptionRow = ({ label, value }: DescriptionRowProps) => (
-  <div className="flex justify-between items-center py-3 px-4 bg-muted/30 rounded-lg">
-    <span className="text-primary text-sm">{label}</span>
-    <span className="text-foreground font-medium text-sm text-right">{value}</span>
+  <div className="flex justify-between items-center py-3 px-4 bg-slate-50 rounded-lg border border-slate-100">
+    <span className="text-slate-500 text-sm">{label}</span>
+    <span className="text-slate-800 font-medium text-sm text-right">{value}</span>
   </div>
 );
 
