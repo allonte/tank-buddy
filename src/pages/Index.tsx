@@ -6,13 +6,16 @@ import SpecificationCard from "@/components/SpecificationCard";
 import CapacityChart from "@/components/CapacityChart";
 import CertificateCard from "@/components/CertificateCard";
 import LevelSlider from "@/components/LevelSlider";
-import DensityCalculator from "@/components/DensityCalculator";
+import MassCalculator from "@/components/MassCalculator";
 import TankSelector from "@/components/TankSelector";
 import { TANKS, TankConfig } from "@/lib/tankData";
+import { calculateCorrectedDensity } from "@/lib/densityLookup";
 
 const Index = () => {
   const [selectedTankId, setSelectedTankId] = useState("tank-207");
   const [currentLevel, setCurrentLevel] = useState(55250);
+  const [temperature, setTemperature] = useState(20.0);
+  const [density, setDensity] = useState(0.540);
 
   const tankData: TankConfig = TANKS[selectedTankId];
 
@@ -22,6 +25,8 @@ const Index = () => {
   }, [selectedTankId, tankData.nominalCapacity]);
 
   const percentage = (currentLevel / tankData.nominalCapacity) * 100;
+  const correctedDensity = calculateCorrectedDensity(density, temperature);
+  const mass = currentLevel * correctedDensity;
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,6 +52,7 @@ const Index = () => {
                 level={currentLevel}
                 capacity={tankData.nominalCapacity}
                 unit="L"
+                mass={mass}
               />
             </div>
 
@@ -101,6 +107,15 @@ const Index = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Mass Calculator with Temperature & Density inputs */}
+            <MassCalculator
+              volume={currentLevel}
+              temperature={temperature}
+              density={density}
+              onTemperatureChange={setTemperature}
+              onDensityChange={setDensity}
+            />
+
             {/* Certificate */}
             <CertificateCard
               certificateNo={tankData.certificateNo}
@@ -117,9 +132,6 @@ const Index = () => {
               currentLevel={percentage}
               maxHeight={tankData.maxHeight}
             />
-
-            {/* Density Calculator */}
-            <DensityCalculator />
           </div>
         </div>
 
