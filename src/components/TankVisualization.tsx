@@ -4,9 +4,10 @@ interface TankVisualizationProps {
   level: number;
   capacity: number;
   unit?: string;
+  mass?: number;
 }
 
-const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationProps) => {
+const TankVisualization = ({ level, capacity, unit = "L", mass }: TankVisualizationProps) => {
   const [animatedLevel, setAnimatedLevel] = useState(0);
   const percentage = (level / capacity) * 100;
 
@@ -37,8 +38,9 @@ const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationPro
   const hemisphereRadius = tankHeight / 2;
   const cylinderWidth = tankWidth - tankHeight; // Subtract both hemispheres
 
-  // Calculate fill based on percentage
-  const fillWidth = (animatedLevel / 100) * tankWidth;
+  // Calculate fill from bottom based on percentage
+  const fillHeight = (animatedLevel / 100) * tankHeight;
+  const fillY = height / 2 + hemisphereRadius - fillHeight;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -61,10 +63,10 @@ const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationPro
               <circle cx={50 + hemisphereRadius + cylinderWidth} cy={height / 2} r={hemisphereRadius} />
             </clipPath>
             
-            {/* Gradient for liquid */}
-            <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor={getLiquidColor()} stopOpacity="0.9" />
-              <stop offset="100%" stopColor={getLiquidColor()} stopOpacity="1" />
+            {/* Gradient for liquid - from bottom to top */}
+            <linearGradient id="liquidGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+              <stop offset="0%" stopColor={getLiquidColor()} stopOpacity="1" />
+              <stop offset="100%" stopColor={getLiquidColor()} stopOpacity="0.8" />
             </linearGradient>
 
             {/* Tank body gradient */}
@@ -80,15 +82,15 @@ const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationPro
             <rect x="0" y="0" width={width} height={height} fill="url(#tankGradient)" />
           </g>
 
-          {/* Liquid fill */}
+          {/* Liquid fill - from bottom */}
           <g clipPath="url(#tankShape)">
             <rect
-              x="50"
-              y={height / 2 - hemisphereRadius}
-              width={fillWidth}
-              height={tankHeight}
+              x="0"
+              y={fillY}
+              width={width}
+              height={fillHeight}
               fill="url(#liquidGradient)"
-              style={{ transition: "width 0.5s ease-out" }}
+              style={{ transition: "y 0.5s ease-out, height 0.5s ease-out" }}
             />
           </g>
 
@@ -139,20 +141,31 @@ const TankVisualization = ({ level, capacity, unit = "L" }: TankVisualizationPro
       </div>
 
       {/* Level indicators */}
-      <div className="flex items-center gap-8">
+      <div className="flex items-center gap-6 flex-wrap justify-center">
         <div className="text-center">
           <p className="text-muted-foreground text-sm font-medium mb-1">Current Level</p>
-          <p className="text-4xl font-bold gradient-text font-mono">
+          <p className="text-3xl font-bold gradient-text font-mono">
             {animatedLevel.toFixed(1)}%
           </p>
         </div>
         <div className="w-px h-12 bg-border" />
         <div className="text-center">
           <p className="text-muted-foreground text-sm font-medium mb-1">Volume</p>
-          <p className="text-4xl font-bold text-foreground font-mono">
-            {level.toLocaleString()} <span className="text-xl text-muted-foreground">{unit}</span>
+          <p className="text-3xl font-bold text-foreground font-mono">
+            {level.toLocaleString()} <span className="text-lg text-muted-foreground">{unit}</span>
           </p>
         </div>
+        {mass !== undefined && (
+          <>
+            <div className="w-px h-12 bg-border" />
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm font-medium mb-1">Mass</p>
+              <p className="text-3xl font-bold text-primary font-mono">
+                {mass.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-lg text-muted-foreground">kg</span>
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
