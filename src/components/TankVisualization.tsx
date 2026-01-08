@@ -7,7 +7,8 @@ interface TankVisualizationProps {
   unit?: string;
   mass?: number;
   maxHeight?: number;
-  onLevelChange?: (volume: number) => void;
+  currentHeight?: number;
+  onHeightChange?: (height: number) => void;
 }
 
 const TankVisualization = ({ 
@@ -15,11 +16,14 @@ const TankVisualization = ({
   capacity, 
   unit = "L", 
   mass,
-  maxHeight = 2235,
-  onLevelChange 
+  maxHeight = 2237,
+  currentHeight = 0,
+  onHeightChange 
 }: TankVisualizationProps) => {
   const [animatedLevel, setAnimatedLevel] = useState(0);
-  const percentage = (level / capacity) * 100;
+  
+  // Calculate percentage based on current volume vs capacity
+  const percentage = capacity > 0 ? (level / capacity) * 100 : 0;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -44,15 +48,16 @@ const TankVisualization = ({
   const fillHeight = (animatedLevel / 100) * tankHeight;
   const fillY = height / 2 + hemisphereRadius - fillHeight - 15;
 
-  // Calculate height in mm based on percentage
-  const heightMm = (percentage / 100) * maxHeight;
-
   const handleSliderChange = (value: number[]) => {
-    if (onLevelChange) {
-      const newVolume = (value[0] / 100) * capacity;
-      onLevelChange(newVolume);
+    if (onHeightChange) {
+      // Convert slider percentage to height in mm
+      const newHeight = Math.round((value[0] / 100) * maxHeight);
+      onHeightChange(newHeight);
     }
   };
+
+  // Calculate slider value from current height
+  const sliderValue = maxHeight > 0 ? (currentHeight / maxHeight) * 100 : 0;
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -60,7 +65,7 @@ const TankVisualization = ({
       <div className="relative w-full flex justify-center rounded-xl overflow-hidden p-6 bg-white border border-border">
         {/* Percentage and capacity badge */}
         <div className="absolute top-4 right-4 bg-white border border-border rounded-lg px-3 py-2 shadow-sm z-10">
-          <p className="text-lg font-bold text-foreground">{animatedLevel.toFixed(0)}%</p>
+          <p className="text-lg font-bold text-foreground">{animatedLevel.toFixed(1)}%</p>
           <p className="text-xs text-muted-foreground">Cap: {level.toLocaleString()} {unit}</p>
         </div>
 
@@ -158,18 +163,22 @@ const TankVisualization = ({
       {/* Slider gauge with labels */}
       <div className="w-full px-2">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-foreground">Fill Level: {animatedLevel.toFixed(0)}%</span>
+          <span className="text-sm font-medium text-foreground">Fill Level: {animatedLevel.toFixed(1)}%</span>
           <span className="text-sm text-muted-foreground">
-            Height: {heightMm.toFixed(2)} mm • Capacity: {level.toLocaleString()} {unit}
+            Height: {currentHeight} mm • Volume: {level.toLocaleString()} {unit}
           </span>
         </div>
         <Slider
-          value={[percentage]}
+          value={[sliderValue]}
           onValueChange={handleSliderChange}
           max={100}
           step={0.1}
           className="w-full"
         />
+        <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+          <span>0 mm</span>
+          <span>{maxHeight} mm</span>
+        </div>
       </div>
 
       {/* Mass display if available */}

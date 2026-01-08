@@ -135,6 +135,19 @@ Mass (kg),${resultsData.mass.toFixed(3)}`;
                 capacity={tankData.nominalCapacity}
                 unit="L"
                 mass={mass}
+                maxHeight={tankData.maxHeight}
+                currentHeight={height}
+                onHeightChange={(newHeight) => {
+                  setHeight(newHeight);
+                  // Look up volume from height based on selected tank
+                  let volume: number;
+                  if (selectedTankId === "tank-230") {
+                    volume = getTank2CapacityByHeight(newHeight);
+                  } else {
+                    volume = lookupCapacity(newHeight);
+                  }
+                  setCurrentLevel(Math.round(volume));
+                }}
               />
             </div>
 
