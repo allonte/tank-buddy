@@ -56,9 +56,6 @@ export default {
           "liquid-glow": "hsl(var(--tank-liquid-glow))",
           empty: "hsl(var(--tank-empty))",
         },
-        gold: {
-          DEFAULT: "hsl(var(--gold-glow))",
-        },
         success: "hsl(var(--success))",
         warning: "hsl(var(--warning))",
         danger: "hsl(var(--danger))",
