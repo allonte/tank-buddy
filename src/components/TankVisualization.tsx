@@ -22,8 +22,8 @@ const TankVisualization = ({
 }: TankVisualizationProps) => {
   const [animatedLevel, setAnimatedLevel] = useState(0);
   
-  // Calculate percentage based on current volume vs capacity
-  const percentage = capacity > 0 ? (level / capacity) * 100 : 0;
+  // Calculate percentage based on height position (0 to maxHeight = 0 to 100%)
+  const percentage = maxHeight > 0 ? (currentHeight / maxHeight) * 100 : 0;
 
   useEffect(() => {
     const timer = setTimeout(() => {
