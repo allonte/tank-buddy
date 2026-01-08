@@ -1,13 +1,23 @@
 import { useState, useEffect } from "react";
+import { Slider } from "@/components/ui/slider";
 
 interface TankVisualizationProps {
   level: number;
   capacity: number;
   unit?: string;
   mass?: number;
+  maxHeight?: number;
+  onLevelChange?: (volume: number) => void;
 }
 
-const TankVisualization = ({ level, capacity, unit = "L", mass }: TankVisualizationProps) => {
+const TankVisualization = ({ 
+  level, 
+  capacity, 
+  unit = "L", 
+  mass,
+  maxHeight = 2235,
+  onLevelChange 
+}: TankVisualizationProps) => {
   const [animatedLevel, setAnimatedLevel] = useState(0);
   const percentage = (level / capacity) * 100;
 
@@ -19,61 +29,66 @@ const TankVisualization = ({ level, capacity, unit = "L", mass }: TankVisualizat
   }, [percentage]);
 
   const getLiquidColor = () => {
-    if (percentage <= 10) return "hsl(0, 72%, 51%)"; // Red/danger
-    if (percentage <= 25) return "hsl(38, 92%, 50%)"; // Amber/warning
-    return "hsl(225, 55%, 45%)"; // Murban blue
-  };
-
-  const getGlowColor = () => {
-    if (percentage <= 10) return "shadow-[0_0_60px_hsl(0_72%_51%/0.4)]";
-    if (percentage <= 25) return "shadow-[0_0_60px_hsl(38_92%_50%/0.4)]";
-    return "shadow-[0_0_60px_hsl(225_55%_45%/0.3)]";
+    return "hsl(142, 76%, 36%)"; // Green
   };
 
   // SVG dimensions
-  const width = 400;
-  const height = 160;
+  const width = 500;
+  const height = 180;
   const tankHeight = 100;
-  const tankWidth = 300;
+  const tankWidth = 400;
   const hemisphereRadius = tankHeight / 2;
-  const cylinderWidth = tankWidth - tankHeight; // Subtract both hemispheres
+  const cylinderWidth = tankWidth - tankHeight;
 
   // Calculate fill from bottom based on percentage
   const fillHeight = (animatedLevel / 100) * tankHeight;
-  const fillY = height / 2 + hemisphereRadius - fillHeight;
+  const fillY = height / 2 + hemisphereRadius - fillHeight - 15;
+
+  // Calculate height in mm based on percentage
+  const heightMm = (percentage / 100) * maxHeight;
+
+  const handleSliderChange = (value: number[]) => {
+    if (onLevelChange) {
+      const newVolume = (value[0] / 100) * capacity;
+      onLevelChange(newVolume);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      {/* 2D Bullet Tank SVG */}
-      <div className={`relative w-full flex justify-center rounded-xl overflow-hidden ${getGlowColor()} p-6 bg-muted/30`}>
+    <div className="flex flex-col items-center gap-4">
+      {/* Tank SVG with white background */}
+      <div className="relative w-full flex justify-center rounded-xl overflow-hidden p-6 bg-white border border-border">
+        {/* Percentage and capacity badge */}
+        <div className="absolute top-4 right-4 bg-white border border-border rounded-lg px-3 py-2 shadow-sm z-10">
+          <p className="text-lg font-bold text-foreground">{animatedLevel.toFixed(0)}%</p>
+          <p className="text-xs text-muted-foreground">Cap: {level.toLocaleString()} {unit}</p>
+        </div>
+
         <svg
           width={width}
           height={height}
           viewBox={`0 0 ${width} ${height}`}
-          className="drop-shadow-lg"
+          className="drop-shadow-sm"
         >
           {/* Define clip path for the bullet tank shape */}
           <defs>
             <clipPath id="tankShape">
-              {/* Left hemisphere */}
-              <circle cx={50 + hemisphereRadius} cy={height / 2} r={hemisphereRadius} />
-              {/* Center cylinder */}
-              <rect x={50 + hemisphereRadius} y={height / 2 - hemisphereRadius} width={cylinderWidth} height={tankHeight} />
-              {/* Right hemisphere */}
-              <circle cx={50 + hemisphereRadius + cylinderWidth} cy={height / 2} r={hemisphereRadius} />
+              <circle cx={50 + hemisphereRadius} cy={height / 2 - 15} r={hemisphereRadius} />
+              <rect x={50 + hemisphereRadius} y={height / 2 - hemisphereRadius - 15} width={cylinderWidth} height={tankHeight} />
+              <circle cx={50 + hemisphereRadius + cylinderWidth} cy={height / 2 - 15} r={hemisphereRadius} />
             </clipPath>
             
-            {/* Gradient for liquid - from bottom to top */}
+            {/* Gradient for liquid */}
             <linearGradient id="liquidGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor={getLiquidColor()} stopOpacity="1" />
-              <stop offset="100%" stopColor={getLiquidColor()} stopOpacity="0.8" />
+              <stop offset="0%" stopColor={getLiquidColor()} stopOpacity="0.9" />
+              <stop offset="100%" stopColor={getLiquidColor()} stopOpacity="0.7" />
             </linearGradient>
 
-            {/* Tank body gradient */}
+            {/* Tank body gradient - light gray */}
             <linearGradient id="tankGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(220, 15%, 95%)" />
-              <stop offset="50%" stopColor="hsl(220, 15%, 90%)" />
-              <stop offset="100%" stopColor="hsl(220, 15%, 85%)" />
+              <stop offset="0%" stopColor="hsl(210, 20%, 96%)" />
+              <stop offset="50%" stopColor="hsl(210, 15%, 92%)" />
+              <stop offset="100%" stopColor="hsl(210, 15%, 88%)" />
             </linearGradient>
           </defs>
 
@@ -94,79 +109,78 @@ const TankVisualization = ({ level, capacity, unit = "L", mass }: TankVisualizat
             />
           </g>
 
-          {/* Tank outline */}
-          {/* Left hemisphere outline */}
+          {/* Tank outline - subtle gray */}
           <path
-            d={`M ${50 + hemisphereRadius} ${height / 2 - hemisphereRadius} 
-                A ${hemisphereRadius} ${hemisphereRadius} 0 0 0 ${50 + hemisphereRadius} ${height / 2 + hemisphereRadius}`}
+            d={`M ${50 + hemisphereRadius} ${height / 2 - hemisphereRadius - 15} 
+                A ${hemisphereRadius} ${hemisphereRadius} 0 0 0 ${50 + hemisphereRadius} ${height / 2 + hemisphereRadius - 15}`}
             fill="none"
-            stroke="hsl(0, 72%, 35%)"
-            strokeWidth="3"
+            stroke="hsl(210, 15%, 75%)"
+            strokeWidth="2"
           />
-          {/* Top line */}
           <line
             x1={50 + hemisphereRadius}
-            y1={height / 2 - hemisphereRadius}
+            y1={height / 2 - hemisphereRadius - 15}
             x2={50 + hemisphereRadius + cylinderWidth}
-            y2={height / 2 - hemisphereRadius}
-            stroke="hsl(0, 72%, 35%)"
-            strokeWidth="3"
+            y2={height / 2 - hemisphereRadius - 15}
+            stroke="hsl(210, 15%, 75%)"
+            strokeWidth="2"
           />
-          {/* Right hemisphere outline */}
           <path
-            d={`M ${50 + hemisphereRadius + cylinderWidth} ${height / 2 - hemisphereRadius} 
-                A ${hemisphereRadius} ${hemisphereRadius} 0 0 1 ${50 + hemisphereRadius + cylinderWidth} ${height / 2 + hemisphereRadius}`}
+            d={`M ${50 + hemisphereRadius + cylinderWidth} ${height / 2 - hemisphereRadius - 15} 
+                A ${hemisphereRadius} ${hemisphereRadius} 0 0 1 ${50 + hemisphereRadius + cylinderWidth} ${height / 2 + hemisphereRadius - 15}`}
             fill="none"
-            stroke="hsl(0, 72%, 35%)"
-            strokeWidth="3"
+            stroke="hsl(210, 15%, 75%)"
+            strokeWidth="2"
           />
-          {/* Bottom line */}
           <line
             x1={50 + hemisphereRadius}
-            y1={height / 2 + hemisphereRadius}
+            y1={height / 2 + hemisphereRadius - 15}
             x2={50 + hemisphereRadius + cylinderWidth}
-            y2={height / 2 + hemisphereRadius}
-            stroke="hsl(0, 72%, 35%)"
-            strokeWidth="3"
+            y2={height / 2 + hemisphereRadius - 15}
+            stroke="hsl(210, 15%, 75%)"
+            strokeWidth="2"
           />
 
+          {/* Top valves */}
+          <circle cx="150" cy={height / 2 - hemisphereRadius - 20} r="4" fill="hsl(210, 15%, 70%)" />
+          <circle cx="250" cy={height / 2 - hemisphereRadius - 20} r="4" fill="hsl(210, 15%, 70%)" />
+          <circle cx="350" cy={height / 2 - hemisphereRadius - 20} r="4" fill="hsl(210, 15%, 70%)" />
+
+          {/* Support platform */}
+          <rect x="40" y={height / 2 + hemisphereRadius - 10} width={420} height="8" fill="hsl(210, 15%, 60%)" rx="2" />
+          
           {/* Support legs */}
-          <rect x="120" y={height / 2 + hemisphereRadius} width="20" height="25" fill="hsl(220, 15%, 30%)" rx="2" />
-          <rect x="260" y={height / 2 + hemisphereRadius} width="20" height="25" fill="hsl(220, 15%, 30%)" rx="2" />
-
-          {/* Top valve */}
-          <rect x="195" y={height / 2 - hemisphereRadius - 20} width="10" height="20" fill="hsl(220, 15%, 30%)" rx="1" />
-          <circle cx="200" cy={height / 2 - hemisphereRadius - 25} r="8" fill="hsl(0, 72%, 35%)" />
+          <rect x="100" y={height / 2 + hemisphereRadius - 2} width="15" height="20" fill="hsl(210, 15%, 55%)" rx="1" />
+          <rect x="385" y={height / 2 + hemisphereRadius - 2} width="15" height="20" fill="hsl(210, 15%, 55%)" rx="1" />
         </svg>
       </div>
 
-      {/* Level indicators */}
-      <div className="flex items-center gap-6 flex-wrap justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm font-medium mb-1">Current Level</p>
-          <p className="text-3xl font-bold gradient-text font-mono">
-            {animatedLevel.toFixed(1)}%
-          </p>
+      {/* Slider gauge with labels */}
+      <div className="w-full px-2">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-foreground">Fill Level: {animatedLevel.toFixed(0)}%</span>
+          <span className="text-sm text-muted-foreground">
+            Height: {heightMm.toFixed(2)} mm • Capacity: {level.toLocaleString()} {unit}
+          </span>
         </div>
-        <div className="w-px h-12 bg-border" />
-        <div className="text-center">
-          <p className="text-muted-foreground text-sm font-medium mb-1">Volume</p>
-          <p className="text-3xl font-bold text-foreground font-mono">
-            {level.toLocaleString()} <span className="text-lg text-muted-foreground">{unit}</span>
-          </p>
-        </div>
-        {mass !== undefined && (
-          <>
-            <div className="w-px h-12 bg-border" />
-            <div className="text-center">
-              <p className="text-muted-foreground text-sm font-medium mb-1">Mass</p>
-              <p className="text-3xl font-bold text-primary font-mono">
-                {mass.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-lg text-muted-foreground">kg</span>
-              </p>
-            </div>
-          </>
-        )}
+        <Slider
+          value={[percentage]}
+          onValueChange={handleSliderChange}
+          max={100}
+          step={0.1}
+          className="w-full"
+        />
       </div>
+
+      {/* Mass display if available */}
+      {mass !== undefined && (
+        <div className="text-center pt-2">
+          <p className="text-sm text-muted-foreground">Mass</p>
+          <p className="text-2xl font-bold text-primary font-mono">
+            {mass.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-sm text-muted-foreground">kg</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 };
