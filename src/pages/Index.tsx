@@ -169,46 +169,6 @@ Mass (kg),${resultsData.mass.toFixed(3)}`;
               selectedTankId={selectedTankId}
             />
 
-            {/* Specifications Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <SpecificationCard
-                icon={<Cylinder className="w-5 h-5" />}
-                label="Tank Type"
-                value={tankData.description}
-              />
-              <SpecificationCard
-                icon={<Ruler className="w-5 h-5" />}
-                label="Inside Diameter"
-                value={tankData.insideDiameter}
-                unit="mm"
-              />
-              <SpecificationCard
-                icon={<Move className="w-5 h-5" />}
-                label="Shell Length"
-                value={tankData.shellLength.toLocaleString()}
-                unit="mm"
-              />
-              <SpecificationCard
-                icon={<Droplets className="w-5 h-5" />}
-                label="Nominal Capacity"
-                value={tankData.nominalCapacity.toLocaleString()}
-                unit="Liters"
-                highlight
-              />
-              <SpecificationCard
-                icon={<Box className="w-5 h-5" />}
-                label="Current Volume"
-                value={currentLevel.toLocaleString()}
-                unit="Liters"
-              />
-              <SpecificationCard
-                icon={<Ruler className="w-5 h-5" />}
-                label="Fill Level"
-                value={percentage.toFixed(1)}
-                unit="%"
-                highlight
-              />
-            </div>
           </div>
 
           {/* Sidebar */}
