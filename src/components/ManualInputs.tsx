@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { lookupDensity, calculateCorrectedDensity } from "@/lib/densityLookup";
+import { lookupDensity } from "@/lib/densityLookup";
+import { CAPACITY_TABLE } from "@/lib/capacityLookup";
+import { TANK2_CAPACITY_TABLE } from "@/lib/tank230CapacityLookup";
 
 interface ManualInputsProps {
   density: number;
@@ -25,6 +27,7 @@ interface ManualInputsProps {
   onCalculate: () => void;
   onReset: () => void;
   maxHeight: number;
+  selectedTankId: string;
 }
 
 const ManualInputs = ({
@@ -41,6 +44,7 @@ const ManualInputs = ({
   onCalculate,
   onReset,
   maxHeight,
+  selectedTankId,
 }: ManualInputsProps) => {
   const [showVCFTable, setShowVCFTable] = useState(false);
   const [vcfDialogOpen, setVcfDialogOpen] = useState(false);
@@ -69,6 +73,29 @@ const ManualInputs = ({
   };
 
   const { temps, densities } = generateVCFTable();
+
+  // Generate capacity table rows based on selected tank
+  const capacityTableRows = useMemo(() => {
+    const table = selectedTankId === "tank-230" ? TANK2_CAPACITY_TABLE : CAPACITY_TABLE;
+    const heights = Object.keys(table).map(Number).sort((a, b) => a - b);
+    const rows: { h1: number; c1: number; h2?: number; c2?: number }[] = [];
+    
+    // Sample every 50mm for display
+    const sampledHeights = heights.filter((h) => h % 50 === 0);
+    const half = Math.ceil(sampledHeights.length / 2);
+    
+    for (let i = 0; i < half; i++) {
+      const h1 = sampledHeights[i];
+      const h2 = sampledHeights[i + half];
+      rows.push({
+        h1,
+        c1: table[h1],
+        h2,
+        c2: h2 !== undefined ? table[h2] : undefined,
+      });
+    }
+    return rows;
+  }, [selectedTankId]);
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
@@ -221,16 +248,31 @@ const ManualInputs = ({
 
       {/* Height-Capacity Dialog */}
       <Dialog open={heightCapacityOpen} onOpenChange={setHeightCapacityOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Height ↔ Capacity Table</DialogTitle>
+            <DialogTitle>Height ↔ Capacity Table ({selectedTankId === "tank-230" ? "Tank 230" : "Tank 207"})</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Use the Height input above and click Calculate to look up the corresponding volume from the calibration table.
-          </p>
-          <div className="mt-4 p-4 bg-secondary rounded-lg">
-            <p className="text-sm text-muted-foreground mb-1">Current Height</p>
-            <p className="text-xl font-mono font-bold">{height} mm</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-secondary">
+                  <th className="border border-border p-2 text-left">Height (mm)</th>
+                  <th className="border border-border p-2 text-right">Capacity (L)</th>
+                  <th className="border border-border p-2 text-left">Height (mm)</th>
+                  <th className="border border-border p-2 text-right">Capacity (L)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {capacityTableRows.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-muted/50">
+                    <td className="border border-border p-2 font-medium">{row.h1}</td>
+                    <td className="border border-border p-2 text-right font-mono">{row.c1?.toLocaleString() ?? "-"}</td>
+                    <td className="border border-border p-2 font-medium">{row.h2 ?? "-"}</td>
+                    <td className="border border-border p-2 text-right font-mono">{row.c2?.toLocaleString() ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </DialogContent>
       </Dialog>
