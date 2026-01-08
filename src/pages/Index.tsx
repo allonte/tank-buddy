@@ -55,12 +55,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <Header
-          tankName={tankData.name}
-          tankOwner={tankData.owner}
-          location={tankData.location}
-          reference={tankData.reference}
-        />
+        <Header tankName={tankData.name} />
 
         {/* Tank Selector */}
         <div className="mb-6">
@@ -95,6 +90,7 @@ const Index = () => {
               onCalculate={handleCalculate}
               onReset={handleReset}
               maxHeight={tankData.maxHeight}
+              selectedTankId={selectedTankId}
             />
 
             {/* Specifications Grid */}
