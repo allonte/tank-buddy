@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
-import { Cylinder, Ruler, Move, Droplets, Box } from "lucide-react";
+import { Cylinder, Ruler, Move, Droplets, Box, Copy, FileSpreadsheet, Printer } from "lucide-react";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import TankVisualization from "@/components/TankVisualization";
 import SpecificationCard from "@/components/SpecificationCard";
 import CertificateCard from "@/components/CertificateCard";
 import ManualInputs from "@/components/ManualInputs";
 import TankSelector from "@/components/TankSelector";
+import { Button } from "@/components/ui/button";
 import { TANKS, TankConfig } from "@/lib/tankData";
-import { calculateCorrectedDensity } from "@/lib/densityLookup";
+import { calculateCorrectedDensity, lookupDensity } from "@/lib/densityLookup";
 import { lookupCapacity } from "@/lib/capacityLookup";
 import { getTank2CapacityByHeight } from "@/lib/tank230CapacityLookup";
 
@@ -49,8 +51,69 @@ const Index = () => {
   };
 
   const percentage = (currentLevel / tankData.nominalCapacity) * 100;
-  const correctedDensity = calculateCorrectedDensity(density, temperature);
-  const mass = currentLevel * correctedDensity;
+  
+  // Calculate VCF (Volume Correction Factor) from product temperature
+  const vcf = lookupDensity(temperature, density);
+  
+  // Shell Correction Factor (simplified - typically 1.0 at reference temp)
+  const scf = 1.0;
+  
+  // PCF (Pressure Correction Factor) - simplified
+  const pcf = 1.0;
+  
+  // Corrected Volume
+  const correctedVolume = currentLevel * vcf * scf;
+  
+  // Mass calculation
+  const mass = correctedVolume * density;
+
+  // Results data for export
+  const resultsData = {
+    referenceVolume: currentLevel,
+    vcf,
+    scf,
+    correctedVolume,
+    pcf,
+    densityUsed: density,
+    mass,
+  };
+
+  const handleCopyResults = () => {
+    const text = `Reference Volume (L): ${resultsData.referenceVolume.toFixed(3)}
+Product Temperature Factor (VCF): ${resultsData.vcf.toFixed(6)}
+Shell Correction Factor (SCF): ${resultsData.scf.toFixed(6)}
+Corrected Volume (L): ${resultsData.correctedVolume.toFixed(3)}
+PCF used: ${resultsData.pcf.toFixed(6)}
+Product Density used (kg/L): ${resultsData.densityUsed.toFixed(3)}
+Mass (kg): ${resultsData.mass.toFixed(3)}`;
+    
+    navigator.clipboard.writeText(text);
+    toast.success("Results copied to clipboard");
+  };
+
+  const handleExportCSV = () => {
+    const csv = `Parameter,Value
+Reference Volume (L),${resultsData.referenceVolume.toFixed(3)}
+Product Temperature Factor (VCF),${resultsData.vcf.toFixed(6)}
+Shell Correction Factor (SCF),${resultsData.scf.toFixed(6)}
+Corrected Volume (L),${resultsData.correctedVolume.toFixed(3)}
+PCF used,${resultsData.pcf.toFixed(6)}
+Product Density used (kg/L),${resultsData.densityUsed.toFixed(3)}
+Mass (kg),${resultsData.mass.toFixed(3)}`;
+    
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tank-results-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported");
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,18 +202,52 @@ const Index = () => {
           <div className="space-y-6">
             {/* Calculation Results */}
             <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="text-lg font-semibold mb-4">Calculation Results</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-secondary rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Corrected Density</p>
-                  <p className="text-xl font-mono font-bold">{correctedDensity.toFixed(4)} kg/L</p>
+              <h3 className="text-xl font-bold text-foreground mb-6">Results</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-muted-foreground">Reference Volume (L)</span>
+                  <span className="font-mono font-semibold">{resultsData.referenceVolume.toFixed(3)}</span>
                 </div>
-                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-1">Calculated Mass</p>
-                  <p className="text-2xl font-mono font-bold text-primary">
-                    {mass.toLocaleString(undefined, { maximumFractionDigits: 1 })} kg
-                  </p>
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-muted-foreground">Product Temperature Factor (VCF)</span>
+                  <span className="font-mono font-semibold">{resultsData.vcf.toFixed(6)}</span>
                 </div>
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-muted-foreground">Shell Correction Factor (SCF)</span>
+                  <span className="font-mono font-semibold">{resultsData.scf.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-muted-foreground">Corrected Volume (L)</span>
+                  <span className="font-mono font-semibold">{resultsData.correctedVolume.toFixed(3)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-muted-foreground">PCF used</span>
+                  <span className="font-mono font-semibold">{resultsData.pcf.toFixed(6)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-border">
+                  <span className="text-muted-foreground">Product Density used (kg/L)</span>
+                  <span className="font-mono font-semibold">{resultsData.densityUsed.toFixed(3)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="font-semibold text-foreground">Mass (kg)</span>
+                  <span className="font-mono font-bold text-lg">{resultsData.mass.toFixed(3)}</span>
+                </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2 mt-6">
+                <Button onClick={handleCopyResults} className="bg-primary hover:bg-primary/90">
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy results
+                </Button>
+                <Button variant="secondary" onClick={handleExportCSV}>
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+                <Button variant="secondary" onClick={handlePrint}>
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
               </div>
             </div>
 
