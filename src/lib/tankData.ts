@@ -1,4 +1,6 @@
 // Tank configuration data for multiple tanks
+import tank207Image from "@/assets/tank-207.png";
+import tank230Image from "@/assets/tank-230.png";
 
 export interface TankConfig {
   id: string;
@@ -17,6 +19,7 @@ export interface TankConfig {
   method: string;
   calibratedBy: string;
   certificateNo: string;
+  image?: string;
   capacityLevels: { percentage: number; height: number }[];
 }
 
@@ -38,6 +41,7 @@ export const TANKS: Record<string, TankConfig> = {
     method: "API MPMS CHAPTER 2",
     calibratedBy: "Murban Engineering Limited",
     certificateNo: "20257001051EN-207",
+    image: tank207Image,
     capacityLevels: [
       { percentage: 5, height: 112 },
       { percentage: 10, height: 224 },
@@ -47,23 +51,24 @@ export const TANKS: Record<string, TankConfig> = {
       { percentage: 100, height: 2237 },
     ],
   },
-  "tank-2": {
-    id: "tank-2",
-    name: "Tank 2",
+  "tank-230": {
+    id: "tank-230",
+    name: "Tank 230",
     owner: "Mabati Rolling Mills",
     location: "Mombasa, Kenya",
-    reference: "20257001051EN-002",
+    reference: "20257001051EN-230",
     description: "LPG Bullet Tank",
-    insideDiameter: 2267,
+    insideDiameter: 2277,
     shellLength: 16900,
-    nominalCapacity: 64059,
+    nominalCapacity: 65000,
     maxHeight: 2235,
     calibrationDate: "24/11/2025",
     validity: "10 Years",
-    uncertainty: "+0.012%",
+    uncertainty: "+0.011%",
     method: "API MPMS CHAPTER 2",
     calibratedBy: "Murban Engineering Limited",
-    certificateNo: "20257001051EN-002",
+    certificateNo: "20257001051EN-230",
+    image: tank230Image,
     capacityLevels: [
       { percentage: 5, height: 112 },
       { percentage: 10, height: 224 },
