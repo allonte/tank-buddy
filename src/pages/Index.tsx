@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Cylinder, Ruler, Move, Droplets, Box } from "lucide-react";
 import Header from "@/components/Header";
 import TankVisualization from "@/components/TankVisualization";
@@ -7,48 +7,36 @@ import CapacityChart from "@/components/CapacityChart";
 import CertificateCard from "@/components/CertificateCard";
 import LevelSlider from "@/components/LevelSlider";
 import DensityCalculator from "@/components/DensityCalculator";
-
-// Tank 207 Data
-const TANK_DATA = {
-  name: "Tank 207",
-  owner: "Mabati Rolling Mills",
-  location: "Mombasa, Kenya",
-  reference: "20257001051EN-207",
-  description: "LPG Bullet Tank",
-  insideDiameter: 2267,
-  shellLength: 16900,
-  nominalCapacity: 65000,
-  calibrationDate: "24/11/2025",
-  validity: "10 Years",
-  uncertainty: "+0.012%",
-  method: "API MPMS CHAPTER 2",
-  calibratedBy: "Murban Engineering Limited",
-  certificateNo: "20257001051EN-207",
-};
-
-const CAPACITY_LEVELS = [
-  { percentage: 5, height: 112 },
-  { percentage: 10, height: 224 },
-  { percentage: 85, height: 1901 },
-  { percentage: 90, height: 2013 },
-  { percentage: 95, height: 2125 },
-  { percentage: 100, height: 2237 },
-];
+import TankSelector from "@/components/TankSelector";
+import { TANKS, TankConfig } from "@/lib/tankData";
 
 const Index = () => {
-  const [currentLevel, setCurrentLevel] = useState(55250); // Start at ~85%
+  const [selectedTankId, setSelectedTankId] = useState("tank-207");
+  const [currentLevel, setCurrentLevel] = useState(55250);
 
-  const percentage = (currentLevel / TANK_DATA.nominalCapacity) * 100;
+  const tankData: TankConfig = TANKS[selectedTankId];
+
+  // Reset level when tank changes
+  useEffect(() => {
+    setCurrentLevel(Math.round(tankData.nominalCapacity * 0.85));
+  }, [selectedTankId, tankData.nominalCapacity]);
+
+  const percentage = (currentLevel / tankData.nominalCapacity) * 100;
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Header
-          tankName={TANK_DATA.name}
-          tankOwner={TANK_DATA.owner}
-          location={TANK_DATA.location}
-          reference={TANK_DATA.reference}
+          tankName={tankData.name}
+          tankOwner={tankData.owner}
+          location={tankData.location}
+          reference={tankData.reference}
         />
+
+        {/* Tank Selector */}
+        <div className="mb-6">
+          <TankSelector value={selectedTankId} onChange={setSelectedTankId} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main visualization area */}
@@ -57,7 +45,7 @@ const Index = () => {
             <div className="glass-card p-8">
               <TankVisualization
                 level={currentLevel}
-                capacity={TANK_DATA.nominalCapacity}
+                capacity={tankData.nominalCapacity}
                 unit="L"
               />
             </div>
@@ -66,7 +54,7 @@ const Index = () => {
             <LevelSlider
               value={currentLevel}
               onChange={setCurrentLevel}
-              max={TANK_DATA.nominalCapacity}
+              max={tankData.nominalCapacity}
             />
 
             {/* Specifications Grid */}
@@ -74,24 +62,24 @@ const Index = () => {
               <SpecificationCard
                 icon={<Cylinder className="w-5 h-5" />}
                 label="Tank Type"
-                value={TANK_DATA.description}
+                value={tankData.description}
               />
               <SpecificationCard
                 icon={<Ruler className="w-5 h-5" />}
                 label="Inside Diameter"
-                value={TANK_DATA.insideDiameter}
+                value={tankData.insideDiameter}
                 unit="mm"
               />
               <SpecificationCard
                 icon={<Move className="w-5 h-5" />}
                 label="Shell Length"
-                value={TANK_DATA.shellLength.toLocaleString()}
+                value={tankData.shellLength.toLocaleString()}
                 unit="mm"
               />
               <SpecificationCard
                 icon={<Droplets className="w-5 h-5" />}
                 label="Nominal Capacity"
-                value={TANK_DATA.nominalCapacity.toLocaleString()}
+                value={tankData.nominalCapacity.toLocaleString()}
                 unit="Liters"
                 highlight
               />
@@ -115,19 +103,19 @@ const Index = () => {
           <div className="space-y-6">
             {/* Certificate */}
             <CertificateCard
-              certificateNo={TANK_DATA.certificateNo}
-              calibrationDate={TANK_DATA.calibrationDate}
-              validity={TANK_DATA.validity}
-              calibratedBy={TANK_DATA.calibratedBy}
-              method={TANK_DATA.method}
-              uncertainty={TANK_DATA.uncertainty}
+              certificateNo={tankData.certificateNo}
+              calibrationDate={tankData.calibrationDate}
+              validity={tankData.validity}
+              calibratedBy={tankData.calibratedBy}
+              method={tankData.method}
+              uncertainty={tankData.uncertainty}
             />
 
             {/* Capacity Chart */}
             <CapacityChart
-              levels={CAPACITY_LEVELS}
+              levels={tankData.capacityLevels}
               currentLevel={percentage}
-              maxHeight={2237}
+              maxHeight={tankData.maxHeight}
             />
 
             {/* Density Calculator */}
@@ -138,7 +126,7 @@ const Index = () => {
         {/* Footer */}
         <footer className="mt-12 text-center text-sm text-muted-foreground">
           <p>
-            Calibrated by <span className="text-primary font-medium">{TANK_DATA.calibratedBy}</span> • 
+            Calibrated by <span className="text-primary font-medium">{tankData.calibratedBy}</span> • 
             November 2025
           </p>
         </footer>
