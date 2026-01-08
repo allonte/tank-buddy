@@ -259,6 +259,13 @@ Mass (kg),${resultsData.mass.toFixed(3)}`;
               calibratedBy={tankData.calibratedBy}
               method={tankData.method}
               uncertainty={tankData.uncertainty}
+              tankName={tankData.name}
+              owner={tankData.owner}
+              location={tankData.location}
+              description={tankData.description}
+              insideDiameter={tankData.insideDiameter}
+              shellLength={tankData.shellLength}
+              nominalCapacity={tankData.nominalCapacity}
             />
           </div>
         </div>
