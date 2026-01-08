@@ -12,6 +12,7 @@ import {
 import { lookupDensity } from "@/lib/densityLookup";
 import { CAPACITY_TABLE } from "@/lib/capacityLookup";
 import { TANK2_CAPACITY_TABLE } from "@/lib/tank230CapacityLookup";
+import { SCF_TABLE } from "@/lib/scfLookup";
 
 interface ManualInputsProps {
   density: number;
@@ -49,6 +50,7 @@ const ManualInputs = ({
   const [showVCFTable, setShowVCFTable] = useState(false);
   const [vcfDialogOpen, setVcfDialogOpen] = useState(false);
   const [heightCapacityOpen, setHeightCapacityOpen] = useState(false);
+  const [scfDialogOpen, setScfDialogOpen] = useState(false);
 
   const handleNumberInput = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -96,6 +98,25 @@ const ManualInputs = ({
     }
     return rows;
   }, [selectedTankId]);
+
+  // Generate SCF table rows (two columns side by side)
+  const scfTableRows = useMemo(() => {
+    const temps = Object.keys(SCF_TABLE).map(Number).sort((a, b) => a - b);
+    const rows: { t1: number; scf1: number; t2?: number; scf2?: number }[] = [];
+    const half = Math.ceil(temps.length / 2);
+    
+    for (let i = 0; i < half; i++) {
+      const t1 = temps[i];
+      const t2 = temps[i + half];
+      rows.push({
+        t1,
+        scf1: SCF_TABLE[t1],
+        t2,
+        scf2: t2 !== undefined ? SCF_TABLE[t2] : undefined,
+      });
+    }
+    return rows;
+  }, []);
 
   return (
     <div className="bg-card rounded-lg border border-border p-6">
@@ -200,7 +221,7 @@ const ManualInputs = ({
         <Button variant="secondary" onClick={onReset}>
           Reset
         </Button>
-        <Button variant="outline" onClick={() => setVcfDialogOpen(true)}>
+        <Button variant="outline" onClick={() => setScfDialogOpen(true)}>
           Shell Correction Factors
         </Button>
         <Button variant="outline">
@@ -269,6 +290,37 @@ const ManualInputs = ({
                     <td className="border border-border p-2 text-right font-mono">{row.c1?.toLocaleString() ?? "-"}</td>
                     <td className="border border-border p-2 font-medium">{row.h2 ?? "-"}</td>
                     <td className="border border-border p-2 text-right font-mono">{row.c2?.toLocaleString() ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shell Correction Factor Dialog */}
+      <Dialog open={scfDialogOpen} onOpenChange={setScfDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Shell Correction Factors (SCF)</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-secondary">
+                  <th className="border border-border p-2 text-left">Temperature °C</th>
+                  <th className="border border-border p-2 text-right">Correction Factor</th>
+                  <th className="border border-border p-2 text-left">Temperature °C</th>
+                  <th className="border border-border p-2 text-right">Correction Factor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scfTableRows.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-muted/50">
+                    <td className="border border-border p-2 font-medium">{row.t1}</td>
+                    <td className="border border-border p-2 text-right font-mono">{row.scf1.toFixed(6)}</td>
+                    <td className="border border-border p-2 font-medium">{row.t2 ?? "-"}</td>
+                    <td className="border border-border p-2 text-right font-mono">{row.scf2?.toFixed(6) ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
