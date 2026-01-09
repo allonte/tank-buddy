@@ -120,128 +120,121 @@ Mass (kg),${resultsData.mass.toFixed(3)}`;
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Header tankName={tankData.name} tankDescription={tankData.description} />
 
-        {/* Tank Selector */}
+        {/* Tank Selector - Full Width */}
         <div className="mb-6">
           <TankSelector value={selectedTankId} onChange={setSelectedTankId} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main visualization area */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Tank Visualization */}
-            <div className="bg-card rounded-lg border border-border p-8">
-              <TankVisualization
-                level={currentLevel}
-                capacity={tankData.nominalCapacity}
-                unit="L"
-                mass={mass}
-                maxHeight={tankData.maxHeight}
-                currentHeight={height}
-                onHeightChange={(newHeight) => {
-                  setHeight(newHeight);
-                  // Look up volume from height based on selected tank
-                  let volume: number;
-                  if (selectedTankId === "tank-230") {
-                    volume = getTank2CapacityByHeight(newHeight);
-                  } else {
-                    volume = lookupCapacity(newHeight);
-                  }
-                  setCurrentLevel(Math.round(volume));
-                }}
-              />
-            </div>
+        {/* Tank Visualization - Full Width */}
+        <div className="mb-6 bg-card rounded-lg border border-border p-6">
+          <TankVisualization
+            level={currentLevel}
+            capacity={tankData.nominalCapacity}
+            unit="L"
+            maxHeight={tankData.maxHeight}
+            currentHeight={height}
+            onHeightChange={(newHeight) => {
+              setHeight(newHeight);
+              // Look up volume from height based on selected tank
+              let volume: number;
+              if (selectedTankId === "tank-230") {
+                volume = getTank2CapacityByHeight(newHeight);
+              } else {
+                volume = lookupCapacity(newHeight);
+              }
+              setCurrentLevel(Math.round(volume));
+            }}
+          />
+        </div>
 
-            {/* Manual Inputs */}
-            <ManualInputs
-              density={density}
-              temperature={temperature}
-              shellTemperature={shellTemperature}
-              height={height}
-              pressure={pressure}
-              onDensityChange={setDensity}
-              onTemperatureChange={setTemperature}
-              onShellTemperatureChange={setShellTemperature}
-              onHeightChange={setHeight}
-              onPressureChange={setPressure}
-              onCalculate={handleCalculate}
-              onReset={handleReset}
-              maxHeight={tankData.maxHeight}
-              selectedTankId={selectedTankId}
-            />
+        {/* Manual Inputs and Results Side by Side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Manual Inputs */}
+          <ManualInputs
+            density={density}
+            temperature={temperature}
+            shellTemperature={shellTemperature}
+            height={height}
+            pressure={pressure}
+            onDensityChange={setDensity}
+            onTemperatureChange={setTemperature}
+            onShellTemperatureChange={setShellTemperature}
+            onHeightChange={setHeight}
+            onPressureChange={setPressure}
+            onCalculate={handleCalculate}
+            onReset={handleReset}
+            maxHeight={tankData.maxHeight}
+            selectedTankId={selectedTankId}
+          />
 
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Calculation Results */}
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="text-xl font-bold text-foreground mb-6">Results</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">Reference Volume (L)</span>
-                  <span className="font-mono font-semibold">{resultsData.referenceVolume.toFixed(3)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">Product Temperature Factor (VCF)</span>
-                  <span className="font-mono font-semibold">{resultsData.vcf.toFixed(6)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">Shell Correction Factor (SCF)</span>
-                  <span className="font-mono font-semibold">{resultsData.scf.toFixed(6)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">Corrected Volume (L)</span>
-                  <span className="font-mono font-semibold">{resultsData.correctedVolume.toFixed(3)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">PCF used</span>
-                  <span className="font-mono font-semibold">{resultsData.pcf.toFixed(6)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-muted-foreground">Product Density used (kg/L)</span>
-                  <span className="font-mono font-semibold">{resultsData.densityUsed.toFixed(3)}</span>
-                </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="font-semibold text-foreground">Mass (kg)</span>
-                  <span className="font-mono font-bold text-lg">{resultsData.mass.toFixed(3)}</span>
-                </div>
+          {/* Calculation Results */}
+          <div className="bg-card rounded-lg border border-border p-6">
+            <h3 className="text-xl font-bold text-foreground mb-6">Results</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Reference Volume (L)</span>
+                <span className="font-mono font-semibold">{resultsData.referenceVolume.toFixed(3)}</span>
               </div>
-              
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 mt-6">
-                <Button onClick={handleCopyResults} className="bg-primary hover:bg-primary/90">
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy results
-                </Button>
-                <Button variant="secondary" onClick={handleExportCSV}>
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Export CSV
-                </Button>
-                <Button variant="secondary" onClick={handlePrint}>
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print
-                </Button>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Product Temperature Factor (VCF)</span>
+                <span className="font-mono font-semibold">{resultsData.vcf.toFixed(6)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Shell Correction Factor (SCF)</span>
+                <span className="font-mono font-semibold">{resultsData.scf.toFixed(6)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Corrected Volume (L)</span>
+                <span className="font-mono font-semibold">{resultsData.correctedVolume.toFixed(3)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">PCF used</span>
+                <span className="font-mono font-semibold">{resultsData.pcf.toFixed(6)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-border">
+                <span className="text-muted-foreground">Product Density used (kg/L)</span>
+                <span className="font-mono font-semibold">{resultsData.densityUsed.toFixed(3)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="font-semibold text-foreground">Mass (kg)</span>
+                <span className="font-mono font-bold text-lg">{resultsData.mass.toFixed(3)}</span>
               </div>
             </div>
-
-            {/* Certificate */}
-            <CertificateCard
-              certificateNo={tankData.certificateNo}
-              calibrationDate={tankData.calibrationDate}
-              validity={tankData.validity}
-              calibratedBy={tankData.calibratedBy}
-              method={tankData.method}
-              uncertainty={tankData.uncertainty}
-              tankName={tankData.name}
-              owner={tankData.owner}
-              location={tankData.location}
-              description={tankData.description}
-              insideDiameter={tankData.insideDiameter}
-              shellLength={tankData.shellLength}
-              nominalCapacity={tankData.nominalCapacity}
-            />
+            
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2 mt-6">
+              <Button onClick={handleCopyResults} className="bg-primary hover:bg-primary/90">
+                <Copy className="w-4 h-4 mr-2" />
+                Copy results
+              </Button>
+              <Button variant="secondary" onClick={handleExportCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Export CSV
+              </Button>
+              <Button variant="secondary" onClick={handlePrint}>
+                <Printer className="w-4 h-4 mr-2" />
+                Print
+              </Button>
+            </div>
           </div>
         </div>
+
+        {/* Certificate */}
+        <CertificateCard
+          certificateNo={tankData.certificateNo}
+          calibrationDate={tankData.calibrationDate}
+          validity={tankData.validity}
+          calibratedBy={tankData.calibratedBy}
+          method={tankData.method}
+          uncertainty={tankData.uncertainty}
+          tankName={tankData.name}
+          owner={tankData.owner}
+          location={tankData.location}
+          description={tankData.description}
+          insideDiameter={tankData.insideDiameter}
+          shellLength={tankData.shellLength}
+          nominalCapacity={tankData.nominalCapacity}
+        />
 
         {/* Footer */}
         <footer className="mt-12 text-center text-sm text-muted-foreground">

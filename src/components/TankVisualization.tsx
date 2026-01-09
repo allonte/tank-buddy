@@ -32,22 +32,6 @@ const TankVisualization = ({
     return () => clearTimeout(timer);
   }, [percentage]);
 
-  const getLiquidColor = () => {
-    return "hsl(142, 76%, 36%)"; // Green
-  };
-
-  // SVG dimensions
-  const width = 500;
-  const height = 180;
-  const tankHeight = 100;
-  const tankWidth = 400;
-  const hemisphereRadius = tankHeight / 2;
-  const cylinderWidth = tankWidth - tankHeight;
-
-  // Calculate fill from bottom based on percentage
-  const fillHeight = (animatedLevel / 100) * tankHeight;
-  const fillY = height / 2 + hemisphereRadius - fillHeight - 15;
-
   const handleSliderChange = (value: number[]) => {
     if (onHeightChange) {
       // Convert slider percentage to height in mm
@@ -59,47 +43,85 @@ const TankVisualization = ({
   // Calculate slider value from current height
   const sliderValue = maxHeight > 0 ? (currentHeight / maxHeight) * 100 : 0;
 
+  // SVG dimensions - wider to fill screen
+  const width = 600;
+  const height = 200;
+  const tankHeight = 120;
+  const tankWidth = 500;
+  const hemisphereRadius = tankHeight / 2;
+  const cylinderWidth = tankWidth - tankHeight;
+
+  // Calculate fill from bottom based on percentage
+  const fillHeight = (animatedLevel / 100) * tankHeight;
+  const tankCenterY = 90;
+  const fillY = tankCenterY + hemisphereRadius - fillHeight;
+
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-4 w-full">
       {/* Tank SVG with white background */}
-      <div className="relative w-full flex justify-center rounded-xl overflow-hidden p-6 bg-white border border-border">
+      <div className="relative w-full flex justify-center rounded-xl overflow-hidden p-4 bg-white border border-border">
         {/* Percentage and capacity badge */}
-        <div className="absolute top-4 right-4 bg-white border border-border rounded-lg px-3 py-2 shadow-sm z-10">
+        <div className="absolute top-3 right-3 bg-white border border-border rounded-lg px-3 py-2 shadow-sm z-10">
           <p className="text-lg font-bold text-foreground">{animatedLevel.toFixed(1)}%</p>
           <p className="text-xs text-muted-foreground">Cap: {level.toLocaleString()} {unit}</p>
         </div>
 
         <svg
-          width={width}
+          width="100%"
           height={height}
           viewBox={`0 0 ${width} ${height}`}
-          className="drop-shadow-sm"
+          className="drop-shadow-sm max-w-full"
+          preserveAspectRatio="xMidYMid meet"
         >
-          {/* Define clip path for the bullet tank shape */}
           <defs>
+            {/* Clip path for the bullet tank shape */}
             <clipPath id="tankShape">
-              <circle cx={50 + hemisphereRadius} cy={height / 2 - 15} r={hemisphereRadius} />
-              <rect x={50 + hemisphereRadius} y={height / 2 - hemisphereRadius - 15} width={cylinderWidth} height={tankHeight} />
-              <circle cx={50 + hemisphereRadius + cylinderWidth} cy={height / 2 - 15} r={hemisphereRadius} />
+              <circle cx={50 + hemisphereRadius} cy={tankCenterY} r={hemisphereRadius} />
+              <rect x={50 + hemisphereRadius} y={tankCenterY - hemisphereRadius} width={cylinderWidth} height={tankHeight} />
+              <circle cx={50 + hemisphereRadius + cylinderWidth} cy={tankCenterY} r={hemisphereRadius} />
             </clipPath>
             
-            {/* Gradient for liquid */}
+            {/* Gradient for liquid - green */}
             <linearGradient id="liquidGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-              <stop offset="0%" stopColor={getLiquidColor()} stopOpacity="0.9" />
-              <stop offset="100%" stopColor={getLiquidColor()} stopOpacity="0.7" />
+              <stop offset="0%" stopColor="hsl(142, 76%, 36%)" stopOpacity="0.95" />
+              <stop offset="50%" stopColor="hsl(142, 70%, 45%)" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="hsl(142, 65%, 50%)" stopOpacity="0.75" />
             </linearGradient>
 
-            {/* Tank body gradient - light gray */}
+            {/* Tank body gradient - realistic metallic gray */}
             <linearGradient id="tankGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="hsl(210, 20%, 96%)" />
-              <stop offset="50%" stopColor="hsl(210, 15%, 92%)" />
-              <stop offset="100%" stopColor="hsl(210, 15%, 88%)" />
+              <stop offset="0%" stopColor="hsl(220, 14%, 96%)" />
+              <stop offset="25%" stopColor="hsl(220, 12%, 92%)" />
+              <stop offset="50%" stopColor="hsl(220, 10%, 88%)" />
+              <stop offset="75%" stopColor="hsl(220, 12%, 85%)" />
+              <stop offset="100%" stopColor="hsl(220, 10%, 82%)" />
+            </linearGradient>
+
+            {/* Highlight gradient for 3D effect */}
+            <linearGradient id="highlightGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+              <stop offset="30%" stopColor="white" stopOpacity="0.1" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+
+            {/* Platform gradient */}
+            <linearGradient id="platformGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="hsl(220, 15%, 55%)" />
+              <stop offset="100%" stopColor="hsl(220, 15%, 45%)" />
             </linearGradient>
           </defs>
 
           {/* Tank body background */}
           <g clipPath="url(#tankShape)">
             <rect x="0" y="0" width={width} height={height} fill="url(#tankGradient)" />
+            {/* Top highlight for 3D effect */}
+            <ellipse 
+              cx={width / 2} 
+              cy={tankCenterY - hemisphereRadius + 15} 
+              rx={cylinderWidth / 2 + 20} 
+              ry="20" 
+              fill="url(#highlightGradient)" 
+            />
           </g>
 
           {/* Liquid fill - from bottom */}
@@ -112,51 +134,71 @@ const TankVisualization = ({
               fill="url(#liquidGradient)"
               style={{ transition: "y 0.5s ease-out, height 0.5s ease-out" }}
             />
+            {/* Liquid surface highlight */}
+            {fillHeight > 5 && (
+              <line
+                x1={60}
+                y1={fillY + 2}
+                x2={width - 60}
+                y2={fillY + 2}
+                stroke="hsl(142, 60%, 60%)"
+                strokeWidth="2"
+                strokeOpacity="0.5"
+                style={{ transition: "y 0.5s ease-out" }}
+              />
+            )}
           </g>
 
           {/* Tank outline - subtle gray */}
           <path
-            d={`M ${50 + hemisphereRadius} ${height / 2 - hemisphereRadius - 15} 
-                A ${hemisphereRadius} ${hemisphereRadius} 0 0 0 ${50 + hemisphereRadius} ${height / 2 + hemisphereRadius - 15}`}
+            d={`M ${50 + hemisphereRadius} ${tankCenterY - hemisphereRadius} 
+                A ${hemisphereRadius} ${hemisphereRadius} 0 0 0 ${50 + hemisphereRadius} ${tankCenterY + hemisphereRadius}`}
             fill="none"
-            stroke="hsl(210, 15%, 75%)"
-            strokeWidth="2"
+            stroke="hsl(220, 15%, 70%)"
+            strokeWidth="2.5"
           />
           <line
             x1={50 + hemisphereRadius}
-            y1={height / 2 - hemisphereRadius - 15}
+            y1={tankCenterY - hemisphereRadius}
             x2={50 + hemisphereRadius + cylinderWidth}
-            y2={height / 2 - hemisphereRadius - 15}
-            stroke="hsl(210, 15%, 75%)"
-            strokeWidth="2"
+            y2={tankCenterY - hemisphereRadius}
+            stroke="hsl(220, 15%, 70%)"
+            strokeWidth="2.5"
           />
           <path
-            d={`M ${50 + hemisphereRadius + cylinderWidth} ${height / 2 - hemisphereRadius - 15} 
-                A ${hemisphereRadius} ${hemisphereRadius} 0 0 1 ${50 + hemisphereRadius + cylinderWidth} ${height / 2 + hemisphereRadius - 15}`}
+            d={`M ${50 + hemisphereRadius + cylinderWidth} ${tankCenterY - hemisphereRadius} 
+                A ${hemisphereRadius} ${hemisphereRadius} 0 0 1 ${50 + hemisphereRadius + cylinderWidth} ${tankCenterY + hemisphereRadius}`}
             fill="none"
-            stroke="hsl(210, 15%, 75%)"
-            strokeWidth="2"
+            stroke="hsl(220, 15%, 70%)"
+            strokeWidth="2.5"
           />
           <line
             x1={50 + hemisphereRadius}
-            y1={height / 2 + hemisphereRadius - 15}
+            y1={tankCenterY + hemisphereRadius}
             x2={50 + hemisphereRadius + cylinderWidth}
-            y2={height / 2 + hemisphereRadius - 15}
-            stroke="hsl(210, 15%, 75%)"
-            strokeWidth="2"
+            y2={tankCenterY + hemisphereRadius}
+            stroke="hsl(220, 15%, 70%)"
+            strokeWidth="2.5"
           />
 
-          {/* Top valves */}
-          <circle cx="150" cy={height / 2 - hemisphereRadius - 20} r="4" fill="hsl(210, 15%, 70%)" />
-          <circle cx="250" cy={height / 2 - hemisphereRadius - 20} r="4" fill="hsl(210, 15%, 70%)" />
-          <circle cx="350" cy={height / 2 - hemisphereRadius - 20} r="4" fill="hsl(210, 15%, 70%)" />
+          {/* Top valves/nozzles */}
+          <circle cx="180" cy={tankCenterY - hemisphereRadius - 5} r="5" fill="hsl(220, 15%, 60%)" />
+          <circle cx="300" cy={tankCenterY - hemisphereRadius - 5} r="5" fill="hsl(220, 15%, 60%)" />
+          <circle cx="420" cy={tankCenterY - hemisphereRadius - 5} r="5" fill="hsl(220, 15%, 60%)" />
 
-          {/* Support platform */}
-          <rect x="40" y={height / 2 + hemisphereRadius - 10} width={420} height="8" fill="hsl(210, 15%, 60%)" rx="2" />
+          {/* Support platform - more realistic */}
+          <rect 
+            x="30" 
+            y={tankCenterY + hemisphereRadius + 5} 
+            width={width - 60} 
+            height="12" 
+            fill="url(#platformGradient)" 
+            rx="2" 
+          />
           
           {/* Support legs */}
-          <rect x="100" y={height / 2 + hemisphereRadius - 2} width="15" height="20" fill="hsl(210, 15%, 55%)" rx="1" />
-          <rect x="385" y={height / 2 + hemisphereRadius - 2} width="15" height="20" fill="hsl(210, 15%, 55%)" rx="1" />
+          <rect x="100" y={tankCenterY + hemisphereRadius + 17} width="20" height="25" fill="hsl(220, 15%, 50%)" rx="2" />
+          <rect x="480" y={tankCenterY + hemisphereRadius + 17} width="20" height="25" fill="hsl(220, 15%, 50%)" rx="2" />
         </svg>
       </div>
 
@@ -180,16 +222,6 @@ const TankVisualization = ({
           <span>{maxHeight} mm</span>
         </div>
       </div>
-
-      {/* Mass display if available */}
-      {mass !== undefined && (
-        <div className="text-center pt-2">
-          <p className="text-sm text-muted-foreground">Mass</p>
-          <p className="text-2xl font-bold text-primary font-mono">
-            {mass.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-sm text-muted-foreground">kg</span>
-          </p>
-        </div>
-      )}
     </div>
   );
 };

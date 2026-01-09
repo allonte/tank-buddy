@@ -1,3 +1,4 @@
+import { Box } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,17 +15,20 @@ interface TankSelectorProps {
 
 const TankSelector = ({ value, onChange }: TankSelectorProps) => {
   return (
-    <div className="flex items-center gap-3">
-      <label className="text-sm font-medium text-muted-foreground">
-        Select Tank:
-      </label>
+    <div className="w-full">
+      <div className="flex items-center gap-2 mb-2">
+        <Box className="w-4 h-4 text-primary" />
+        <label className="text-sm font-medium text-foreground">
+          Select Tank
+        </label>
+      </div>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-[180px] bg-background border-border">
+        <SelectTrigger className="w-full bg-background border-2 border-primary text-primary font-medium h-12">
           <SelectValue placeholder="Select a tank" />
         </SelectTrigger>
-        <SelectContent className="bg-background border-border z-50">
+        <SelectContent className="bg-background border-primary z-50">
           {TANK_LIST.map((tank) => (
-            <SelectItem key={tank.id} value={tank.id}>
+            <SelectItem key={tank.id} value={tank.id} className="text-primary font-medium">
               {tank.name}
             </SelectItem>
           ))}
