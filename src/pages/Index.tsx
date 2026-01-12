@@ -12,6 +12,7 @@ import { TANKS, TankConfig } from "@/lib/tankData";
 import { calculateCorrectedDensity, lookupDensity } from "@/lib/densityLookup";
 import { lookupCapacity } from "@/lib/capacityLookup";
 import { getTank2CapacityByHeight } from "@/lib/tank230CapacityLookup";
+import { lookupPCF } from "@/lib/pcfLookup";
 
 const Index = () => {
   const [selectedTankId, setSelectedTankId] = useState("tank-207");
@@ -58,13 +59,13 @@ const Index = () => {
   // Shell Correction Factor (simplified - typically 1.0 at reference temp)
   const scf = 1.0;
   
-  // PCF (Pressure Correction Factor) - simplified
-  const pcf = 1.0;
+  // PCF (Pressure Correction Factor) - lookup from table
+  const pcf = lookupPCF(pressure);
   
-  // Corrected Volume
-  const correctedVolume = currentLevel * vcf * scf;
+  // Corrected Volume: Reference Volume × PCF × VCF × SCF
+  const correctedVolume = currentLevel * pcf * vcf * scf;
   
-  // Mass calculation
+  // Mass calculation: Corrected Volume × Product Density
   const mass = correctedVolume * density;
 
   // Results data for export
