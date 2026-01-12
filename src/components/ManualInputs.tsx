@@ -13,7 +13,7 @@ import { lookupDensity } from "@/lib/densityLookup";
 import { CAPACITY_TABLE } from "@/lib/capacityLookup";
 import { TANK2_CAPACITY_TABLE } from "@/lib/tank230CapacityLookup";
 import { SCF_TABLE } from "@/lib/scfLookup";
-
+import { PCF_TABLE } from "@/lib/pcfLookup";
 interface ManualInputsProps {
   density: number;
   temperature: number;
@@ -51,6 +51,7 @@ const ManualInputs = ({
   const [vcfDialogOpen, setVcfDialogOpen] = useState(false);
   const [heightCapacityOpen, setHeightCapacityOpen] = useState(false);
   const [scfDialogOpen, setScfDialogOpen] = useState(false);
+  const [pcfDialogOpen, setPcfDialogOpen] = useState(false);
 
   const handleNumberInput = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -113,6 +114,25 @@ const ManualInputs = ({
         scf1: SCF_TABLE[t1],
         t2,
         scf2: t2 !== undefined ? SCF_TABLE[t2] : undefined,
+      });
+    }
+    return rows;
+  }, []);
+
+  // Generate PCF table rows (two columns side by side)
+  const pcfTableRows = useMemo(() => {
+    const pressures = Object.keys(PCF_TABLE).map(Number).sort((a, b) => a - b);
+    const rows: { p1: number; pcf1: number; p2?: number; pcf2?: number }[] = [];
+    const half = Math.ceil(pressures.length / 2);
+    
+    for (let i = 0; i < half; i++) {
+      const p1 = pressures[i];
+      const p2 = pressures[i + half];
+      rows.push({
+        p1,
+        pcf1: PCF_TABLE[p1],
+        p2,
+        pcf2: p2 !== undefined ? PCF_TABLE[p2] : undefined,
       });
     }
     return rows;
@@ -224,7 +244,7 @@ const ManualInputs = ({
         <Button variant="outline" onClick={() => setScfDialogOpen(true)}>
           Shell Correction Factors
         </Button>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setPcfDialogOpen(true)}>
           Pressure Factors
         </Button>
         <Button variant="outline" onClick={() => setHeightCapacityOpen(true)}>
@@ -321,6 +341,37 @@ const ManualInputs = ({
                     <td className="border border-border p-2 text-right font-mono">{row.scf1.toFixed(6)}</td>
                     <td className="border border-border p-2 font-medium">{row.t2 ?? "-"}</td>
                     <td className="border border-border p-2 text-right font-mono">{row.scf2?.toFixed(6) ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pressure Correction Factor Dialog */}
+      <Dialog open={pcfDialogOpen} onOpenChange={setPcfDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Pressure Correction Factors (PCF)</DialogTitle>
+          </DialogHeader>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="bg-secondary">
+                  <th className="border border-border p-2 text-left">Pressure (Bars)</th>
+                  <th className="border border-border p-2 text-right">Correction Factor</th>
+                  <th className="border border-border p-2 text-left">Pressure (Bars)</th>
+                  <th className="border border-border p-2 text-right">Correction Factor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pcfTableRows.map((row, idx) => (
+                  <tr key={idx} className="hover:bg-muted/50">
+                    <td className="border border-border p-2 font-medium">{row.p1}</td>
+                    <td className="border border-border p-2 text-right font-mono">{row.pcf1.toFixed(5)}</td>
+                    <td className="border border-border p-2 font-medium">{row.p2 ?? "-"}</td>
+                    <td className="border border-border p-2 text-right font-mono">{row.pcf2?.toFixed(5) ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
