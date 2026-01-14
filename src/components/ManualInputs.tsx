@@ -33,17 +33,17 @@ interface ManualInputsProps {
 }
 
 /**
- * Hook to manage a numeric input with local raw string state:
- * - Allows intermediate user typing (empty string, "-", partial decimals)
- * - Syncs local string with external numeric value
- * - Calls onChangeNumber only when string is a valid number (and clamps to bounds)
- * - On blur finalizes/clamps and syncs the displayed raw string to the numeric value
+ * Hook to manage a numeric input with local raw string state, min/max clamping,
+ * and optional validator that checks final values against reference tables.
+ *
+ * validator: (n:number) => { valid: boolean, message?: string }
  */
 function useNumberInput(
   value: number,
   onChangeNumber: (v: number) => void,
   min?: number,
-  max?: number
+  max?: number,
+  validator?: (n: number) => { valid: boolean; message?: string }
 ) {
   const [raw, setRaw] = useState<string>(String(value));
 
@@ -56,7 +56,7 @@ function useNumberInput(
     const s = e.target.value;
     setRaw(s);
 
-    // allow intermediate states: empty string or just '-'
+    // allow intermediate states
     if (s === "" || s === "-") return;
 
     const n = Number(s);
@@ -64,12 +64,19 @@ function useNumberInput(
       let clamped = n;
       if (min !== undefined) clamped = Math.max(min, clamped);
       if (max !== undefined) clamped = Math.min(max, clamped);
-      onChangeNumber(clamped);
+
+      // only call parent if validator accepts it (or no validator provided)
+      if (validator) {
+        const res = validator(clamped);
+        if (res.valid) onChangeNumber(clamped);
+      } else {
+        onChangeNumber(clamped);
+      }
     }
   };
 
   const handleBlur = () => {
-    // If user left intermediate state, reset to parent's numeric value
+    // If user left an intermediate state, reset to parent's numeric value
     if (raw === "" || raw === "-") {
       setRaw(String(value));
       return;
@@ -78,19 +85,38 @@ function useNumberInput(
     const n = Number(raw);
     if (Number.isNaN(n)) {
       setRaw(String(value));
-    } else {
-      let clamped = n;
-      if (min !== undefined) clamped = Math.max(min, clamped);
-      if (max !== undefined) clamped = Math.min(max, clamped);
-      onChangeNumber(clamped);
-      setRaw(String(clamped));
+      return;
     }
+
+    let clamped = n;
+    if (min !== undefined) clamped = Math.max(min, clamped);
+    if (max !== undefined) clamped = Math.min(max, clamped);
+
+    if (validator) {
+      const res = validator(clamped);
+      if (!res.valid) {
+        // Prompt the user to provide a permitted value and reset display to last valid
+        const msg =
+          res.message ??
+          `Value ${clamped} is not in the allowed reference range. Please enter a permitted value.`;
+        // Use alert for a prompt; replace with in-UI message if preferred
+        window.alert(msg);
+        setRaw(String(value));
+        return;
+      }
+    }
+
+    // If valid, finalize with parent and sync display
+    onChangeNumber(clamped);
+    setRaw(String(clamped));
   };
 
   return {
     raw,
     handleChange,
     handleBlur,
+    // expose setter for advanced use if needed
+    setRaw,
   };
 }
 
@@ -116,21 +142,95 @@ const ManualInputs = ({
   const [scfDialogOpen, setScfDialogOpen] = useState(false);
   const [pcfDialogOpen, setPcfDialogOpen] = useState(false);
 
-  // use hook for each numeric input so typing is not blocked
-  const densityInput = useNumberInput(density, onDensityChange, 0.5, 0.59);
-  const temperatureInput = useNumberInput(temperature, onTemperatureChange, 0, 30);
-  const shellTempInput = useNumberInput(shellTemperature, onShellTemperatureChange, 0, 50);
-  const heightInput = useNumberInput(height, onHeightChange, 0, maxHeight);
-  const pressureInput = useNumberInput(pressure, onPressureChange, 0, 50);
-
-  // Generate VCF table data
+  // Generate VCF table data (used for density & product temp validation)
   const generateVCFTable = () => {
     const temps = [0, 5, 10, 15, 20, 25, 30];
-    const densities = [0.500, 0.520, 0.540, 0.560, 0.580, 0.590];
+    const densities = [0.5, 0.52, 0.54, 0.56, 0.58, 0.59]; // normalized decimals
     return { temps, densities };
   };
 
-  const { temps, densities } = generateVCFTable();
+  const { temps: vcfTemps, densities: vcfDensities } = generateVCFTable();
+
+  // Validators for each field that reference the appropriate tables
+  const densityValidator = (n: number) => {
+    // compare to 3-decimal precision like the VCF values
+    const ok = vcfDensities.some((d) => Math.abs(d - n) < 0.0005);
+    return {
+      valid: ok,
+      message: ok
+        ? undefined
+        : `Density ${n} is not in the reference VCF densities. Allowed values: ${vcfDensities
+            .map((d) => d.toFixed(3))
+            .join(", ")}.`,
+    };
+  };
+
+  const productTempValidator = (n: number) => {
+    // require exact match to allowed VCF temps
+    const rounded = Math.round(n);
+    const ok = vcfTemps.includes(rounded);
+    return {
+      valid: ok,
+      message: ok
+        ? undefined
+        : `Temperature ${n}°C is not in the VCF reference temperatures. Allowed values: ${vcfTemps.join(
+            ", "
+          )}°C.`,
+    };
+  };
+
+  const shellTempValidator = (n: number) => {
+    const scfKeys = Object.keys(SCF_TABLE).map(Number);
+    const ok = scfKeys.includes(n);
+    const min = Math.min(...scfKeys);
+    const max = Math.max(...scfKeys);
+    return {
+      valid: ok,
+      message: ok
+        ? undefined
+        : `Shell temperature ${n}°C is not listed in the SCF reference table. Allowed values include: ${scfKeys.join(
+            ", "
+          )}°C. Allowed range ${min}-${max}°C.`,
+    };
+  };
+
+  const heightValidator = (n: number) => {
+    const table = selectedTankId === "tank-230" ? TANK2_CAPACITY_TABLE : CAPACITY_TABLE;
+    const heights = Object.keys(table).map(Number);
+    const ok = heights.includes(n);
+    const min = Math.min(...heights);
+    const max = Math.max(...heights);
+    return {
+      valid: ok,
+      message: ok
+        ? undefined
+        : `Height ${n}mm is not in the selected tank's Height→Capacity reference table. Sampled heights include: ${heights
+            .slice(0, 10)
+            .join(", ")}... (range ${min}-${max} mm). Please enter a permitted height.`,
+    };
+  };
+
+  const pressureValidator = (n: number) => {
+    const pKeys = Object.keys(PCF_TABLE).map(Number);
+    const ok = pKeys.includes(n);
+    const min = Math.min(...pKeys);
+    const max = Math.max(...pKeys);
+    return {
+      valid: ok,
+      message: ok
+        ? undefined
+        : `Pressure ${n} bar is not in the Pressure Correction Factor table. Allowed pressures include: ${pKeys.join(
+            ", "
+          )}. Allowed range ${min}-${max} bar.`,
+    };
+  };
+
+  // use hook for each numeric input so typing is not blocked and we validate against tables
+  const densityInput = useNumberInput(density, onDensityChange, 0.5, 0.59, densityValidator);
+  const temperatureInput = useNumberInput(temperature, onTemperatureChange, 0, 30, productTempValidator);
+  const shellTempInput = useNumberInput(shellTemperature, onShellTemperatureChange, 0, 50, shellTempValidator);
+  const heightInput = useNumberInput(height, onHeightChange, 0, maxHeight, heightValidator);
+  const pressureInput = useNumberInput(pressure, onPressureChange, 0, 50, pressureValidator);
 
   // Generate capacity table rows based on selected tank
   const capacityTableRows = useMemo(() => {
@@ -323,7 +423,7 @@ const ManualInputs = ({
               <thead>
                 <tr className="bg-secondary">
                   <th className="border border-border p-2 text-left">Temp (°C)</th>
-                  {densities.map((d) => (
+                  {vcfDensities.map((d) => (
                     <th key={d} className="border border-border p-2 text-center">
                       SG {d.toFixed(3)}
                     </th>
@@ -331,10 +431,10 @@ const ManualInputs = ({
                 </tr>
               </thead>
               <tbody>
-                {temps.map((t) => (
+                {vcfTemps.map((t) => (
                   <tr key={t} className="hover:bg-muted/50">
                     <td className="border border-border p-2 font-medium">{t}°C</td>
-                    {densities.map((d) => (
+                    {vcfDensities.map((d) => (
                       <td key={`${t}-${d}`} className="border border-border p-2 text-center font-mono">
                         {lookupDensity(t, d).toFixed(4)}
                       </td>
