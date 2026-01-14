@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { CAPACITY_TABLE } from "@/lib/capacityLookup";
 import { TANK2_CAPACITY_TABLE } from "@/lib/tank230CapacityLookup";
 import { SCF_TABLE } from "@/lib/scfLookup";
 import { PCF_TABLE } from "@/lib/pcfLookup";
+
 interface ManualInputsProps {
   density: number;
   temperature: number;
@@ -29,6 +30,68 @@ interface ManualInputsProps {
   onReset: () => void;
   maxHeight: number;
   selectedTankId: string;
+}
+
+/**
+ * Hook to manage a numeric input with local raw string state:
+ * - Allows intermediate user typing (empty string, "-", partial decimals)
+ * - Syncs local string with external numeric value
+ * - Calls onChangeNumber only when string is a valid number (and clamps to bounds)
+ * - On blur finalizes/clamps and syncs the displayed raw string to the numeric value
+ */
+function useNumberInput(
+  value: number,
+  onChangeNumber: (v: number) => void,
+  min?: number,
+  max?: number
+) {
+  const [raw, setRaw] = useState<string>(String(value));
+
+  // keep raw in sync with external numeric changes
+  useEffect(() => {
+    setRaw(String(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const s = e.target.value;
+    setRaw(s);
+
+    // allow intermediate states: empty string or just '-'
+    if (s === "" || s === "-") return;
+
+    const n = Number(s);
+    if (!Number.isNaN(n)) {
+      let clamped = n;
+      if (min !== undefined) clamped = Math.max(min, clamped);
+      if (max !== undefined) clamped = Math.min(max, clamped);
+      onChangeNumber(clamped);
+    }
+  };
+
+  const handleBlur = () => {
+    // If user left intermediate state, reset to parent's numeric value
+    if (raw === "" || raw === "-") {
+      setRaw(String(value));
+      return;
+    }
+
+    const n = Number(raw);
+    if (Number.isNaN(n)) {
+      setRaw(String(value));
+    } else {
+      let clamped = n;
+      if (min !== undefined) clamped = Math.max(min, clamped);
+      if (max !== undefined) clamped = Math.min(max, clamped);
+      onChangeNumber(clamped);
+      setRaw(String(clamped));
+    }
+  };
+
+  return {
+    raw,
+    handleChange,
+    handleBlur,
+  };
 }
 
 const ManualInputs = ({
@@ -53,20 +116,12 @@ const ManualInputs = ({
   const [scfDialogOpen, setScfDialogOpen] = useState(false);
   const [pcfDialogOpen, setPcfDialogOpen] = useState(false);
 
-  const handleNumberInput = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: (value: number) => void,
-    min?: number,
-    max?: number
-  ) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value)) {
-      let finalValue = value;
-      if (min !== undefined) finalValue = Math.max(min, finalValue);
-      if (max !== undefined) finalValue = Math.min(max, finalValue);
-      setter(finalValue);
-    }
-  };
+  // use hook for each numeric input so typing is not blocked
+  const densityInput = useNumberInput(density, onDensityChange, 0.5, 0.59);
+  const temperatureInput = useNumberInput(temperature, onTemperatureChange, 0, 30);
+  const shellTempInput = useNumberInput(shellTemperature, onShellTemperatureChange, 0, 50);
+  const heightInput = useNumberInput(height, onHeightChange, 0, maxHeight);
+  const pressureInput = useNumberInput(pressure, onPressureChange, 0, 50);
 
   // Generate VCF table data
   const generateVCFTable = () => {
@@ -82,11 +137,11 @@ const ManualInputs = ({
     const table = selectedTankId === "tank-230" ? TANK2_CAPACITY_TABLE : CAPACITY_TABLE;
     const heights = Object.keys(table).map(Number).sort((a, b) => a - b);
     const rows: { h1: number; c1: number; h2?: number; c2?: number }[] = [];
-    
+
     // Sample every 50mm for display
     const sampledHeights = heights.filter((h) => h % 50 === 0);
     const half = Math.ceil(sampledHeights.length / 2);
-    
+
     for (let i = 0; i < half; i++) {
       const h1 = sampledHeights[i];
       const h2 = sampledHeights[i + half];
@@ -105,7 +160,7 @@ const ManualInputs = ({
     const temps = Object.keys(SCF_TABLE).map(Number).sort((a, b) => a - b);
     const rows: { t1: number; scf1: number; t2?: number; scf2?: number }[] = [];
     const half = Math.ceil(temps.length / 2);
-    
+
     for (let i = 0; i < half; i++) {
       const t1 = temps[i];
       const t2 = temps[i + half];
@@ -124,7 +179,7 @@ const ManualInputs = ({
     const pressures = Object.keys(PCF_TABLE).map(Number).sort((a, b) => a - b);
     const rows: { p1: number; pcf1: number; p2?: number; pcf2?: number }[] = [];
     const half = Math.ceil(pressures.length / 2);
-    
+
     for (let i = 0; i < half; i++) {
       const p1 = pressures[i];
       const p2 = pressures[i + half];
@@ -151,8 +206,9 @@ const ManualInputs = ({
           <Input
             id="density"
             type="number"
-            value={density}
-            onChange={(e) => handleNumberInput(e, onDensityChange, 0.500, 0.590)}
+            value={densityInput.raw}
+            onChange={densityInput.handleChange}
+            onBlur={densityInput.handleBlur}
             step={0.001}
             className="bg-secondary border-border"
           />
@@ -166,8 +222,9 @@ const ManualInputs = ({
           <Input
             id="productTemp"
             type="number"
-            value={temperature}
-            onChange={(e) => handleNumberInput(e, onTemperatureChange, 0, 30)}
+            value={temperatureInput.raw}
+            onChange={temperatureInput.handleChange}
+            onBlur={temperatureInput.handleBlur}
             step={0.5}
             className="bg-secondary border-border"
           />
@@ -181,8 +238,9 @@ const ManualInputs = ({
           <Input
             id="shellTemp"
             type="number"
-            value={shellTemperature}
-            onChange={(e) => handleNumberInput(e, onShellTemperatureChange, 0, 50)}
+            value={shellTempInput.raw}
+            onChange={shellTempInput.handleChange}
+            onBlur={shellTempInput.handleBlur}
             step={0.5}
             className="bg-secondary border-border"
           />
@@ -196,8 +254,9 @@ const ManualInputs = ({
           <Input
             id="height"
             type="number"
-            value={height}
-            onChange={(e) => handleNumberInput(e, onHeightChange, 0, maxHeight)}
+            value={heightInput.raw}
+            onChange={heightInput.handleChange}
+            onBlur={heightInput.handleBlur}
             step={1}
             className="bg-secondary border-border"
           />
@@ -212,8 +271,9 @@ const ManualInputs = ({
         <Input
           id="pressure"
           type="number"
-          value={pressure}
-          onChange={(e) => handleNumberInput(e, onPressureChange, 0, 50)}
+          value={pressureInput.raw}
+          onChange={pressureInput.handleChange}
+          onBlur={pressureInput.handleBlur}
           step={0.1}
           className="bg-secondary border-border md:w-1/2"
         />
