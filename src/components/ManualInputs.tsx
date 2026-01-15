@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { lookupDensity } from "@/lib/densityLookup";
+import { lookupDensity, COMBINED_TABLE, SPECIFIC_GRAVITY_VALUES } from "@/lib/densityLookup";
 import { CAPACITY_TABLE } from "@/lib/capacityLookup";
 import { TANK2_CAPACITY_TABLE } from "@/lib/tank230CapacityLookup";
 import { SCF_TABLE } from "@/lib/scfLookup";
@@ -142,14 +142,12 @@ const ManualInputs = ({
   const [scfDialogOpen, setScfDialogOpen] = useState(false);
   const [pcfDialogOpen, setPcfDialogOpen] = useState(false);
 
-  // Generate VCF table data (used for density & product temp validation)
-  const generateVCFTable = () => {
-    const temps = [0, 5, 10, 15, 20, 25, 30];
-    const densities = [0.5, 0.52, 0.54, 0.56, 0.58, 0.59]; // normalized decimals
-    return { temps, densities };
-  };
-
-  const { temps: vcfTemps, densities: vcfDensities } = generateVCFTable();
+  // Generate VCF table data - ALL values from the lookup table
+  const vcfTemps = useMemo(() => {
+    return Object.keys(COMBINED_TABLE).map(Number).sort((a, b) => a - b);
+  }, []);
+  
+  const vcfDensities = SPECIFIC_GRAVITY_VALUES;
 
   // Validators for each field that reference the appropriate tables
   const densityValidator = (n: number) => {
@@ -166,16 +164,13 @@ const ManualInputs = ({
   };
 
   const productTempValidator = (n: number) => {
-    // require exact match to allowed VCF temps
-    const rounded = Math.round(n);
-    const ok = vcfTemps.includes(rounded);
+    // Allow any temp that exists in combined table (0.5 step increments)
+    const ok = vcfTemps.includes(n);
     return {
       valid: ok,
       message: ok
         ? undefined
-        : `Temperature ${n}°C is not in the VCF reference temperatures. Allowed values: ${vcfTemps.join(
-            ", "
-          )}°C.`,
+        : `Temperature ${n}°C is not in the VCF reference temperatures. Allowed range: ${vcfTemps[0]}°C to ${vcfTemps[vcfTemps.length - 1]}°C in 0.5°C steps.`,
     };
   };
 
@@ -232,19 +227,18 @@ const ManualInputs = ({
   const heightInput = useNumberInput(height, onHeightChange, 0, maxHeight, heightValidator);
   const pressureInput = useNumberInput(pressure, onPressureChange, 0, 50, pressureValidator);
 
-  // Generate capacity table rows based on selected tank
+  // Generate capacity table rows based on selected tank - ALL values
   const capacityTableRows = useMemo(() => {
     const table = selectedTankId === "tank-230" ? TANK2_CAPACITY_TABLE : CAPACITY_TABLE;
     const heights = Object.keys(table).map(Number).sort((a, b) => a - b);
     const rows: { h1: number; c1: number; h2?: number; c2?: number }[] = [];
 
-    // Sample every 50mm for display
-    const sampledHeights = heights.filter((h) => h % 50 === 0);
-    const half = Math.ceil(sampledHeights.length / 2);
+    // Show ALL heights, not sampled
+    const half = Math.ceil(heights.length / 2);
 
     for (let i = 0; i < half; i++) {
-      const h1 = sampledHeights[i];
-      const h2 = sampledHeights[i + half];
+      const h1 = heights[i];
+      const h2 = heights[i + half];
       rows.push({
         h1,
         c1: table[h1],
@@ -412,20 +406,20 @@ const ManualInputs = ({
         </Button>
       </div>
 
-      {/* VCF Table Dialog */}
+      {/* VCF Table Dialog - ALL values */}
       <Dialog open={vcfDialogOpen} onOpenChange={setVcfDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Volume Correction Factors (VCF)</DialogTitle>
+            <DialogTitle>Volume Correction Factors (VCF) - Complete Table (0°C to 30°C)</DialogTitle>
           </DialogHeader>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-secondary">
-                  <th className="border border-border p-2 text-left">Temp (°C)</th>
+            <table className="w-full text-xs border-collapse">
+              <thead className="sticky top-0 bg-secondary z-10">
+                <tr>
+                  <th className="border border-border p-1 text-left">Temp (°C)</th>
                   {vcfDensities.map((d) => (
-                    <th key={d} className="border border-border p-2 text-center">
-                      SG {d.toFixed(3)}
+                    <th key={d} className="border border-border p-1 text-center whitespace-nowrap">
+                      {d.toFixed(3)}
                     </th>
                   ))}
                 </tr>
@@ -433,10 +427,10 @@ const ManualInputs = ({
               <tbody>
                 {vcfTemps.map((t) => (
                   <tr key={t} className="hover:bg-muted/50">
-                    <td className="border border-border p-2 font-medium">{t}°C</td>
+                    <td className="border border-border p-1 font-medium">{t.toFixed(1)}</td>
                     {vcfDensities.map((d) => (
-                      <td key={`${t}-${d}`} className="border border-border p-2 text-center font-mono">
-                        {lookupDensity(t, d).toFixed(4)}
+                      <td key={`${t}-${d}`} className="border border-border p-1 text-center font-mono">
+                        {lookupDensity(t, d).toFixed(3)}
                       </td>
                     ))}
                   </tr>
@@ -447,29 +441,29 @@ const ManualInputs = ({
         </DialogContent>
       </Dialog>
 
-      {/* Height-Capacity Dialog */}
+      {/* Height-Capacity Dialog - ALL values */}
       <Dialog open={heightCapacityOpen} onOpenChange={setHeightCapacityOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Height ↔ Capacity Table ({selectedTankId === "tank-230" ? "Tank 230" : "Tank 207"})</DialogTitle>
+            <DialogTitle>Height ↔ Capacity Table - Complete ({selectedTankId === "tank-230" ? "Tank 230" : "Tank 207"})</DialogTitle>
           </DialogHeader>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-secondary">
-                  <th className="border border-border p-2 text-left">Height (mm)</th>
-                  <th className="border border-border p-2 text-right">Capacity (L)</th>
-                  <th className="border border-border p-2 text-left">Height (mm)</th>
-                  <th className="border border-border p-2 text-right">Capacity (L)</th>
+            <table className="w-full text-xs border-collapse">
+              <thead className="sticky top-0 bg-secondary z-10">
+                <tr>
+                  <th className="border border-border p-1 text-left">Height (mm)</th>
+                  <th className="border border-border p-1 text-right">Capacity (L)</th>
+                  <th className="border border-border p-1 text-left">Height (mm)</th>
+                  <th className="border border-border p-1 text-right">Capacity (L)</th>
                 </tr>
               </thead>
               <tbody>
                 {capacityTableRows.map((row, idx) => (
                   <tr key={idx} className="hover:bg-muted/50">
-                    <td className="border border-border p-2 font-medium">{row.h1}</td>
-                    <td className="border border-border p-2 text-right font-mono">{row.c1?.toLocaleString() ?? "-"}</td>
-                    <td className="border border-border p-2 font-medium">{row.h2 ?? "-"}</td>
-                    <td className="border border-border p-2 text-right font-mono">{row.c2?.toLocaleString() ?? "-"}</td>
+                    <td className="border border-border p-1 font-medium">{row.h1}</td>
+                    <td className="border border-border p-1 text-right font-mono">{row.c1?.toLocaleString() ?? "-"}</td>
+                    <td className="border border-border p-1 font-medium">{row.h2 ?? "-"}</td>
+                    <td className="border border-border p-1 text-right font-mono">{row.c2?.toLocaleString() ?? "-"}</td>
                   </tr>
                 ))}
               </tbody>
