@@ -13,6 +13,7 @@ import { calculateCorrectedDensity, lookupDensity } from "@/lib/densityLookup";
 import { lookupCapacity } from "@/lib/capacityLookup";
 import { getTank2CapacityByHeight } from "@/lib/tank230CapacityLookup";
 import { lookupPCF } from "@/lib/pcfLookup";
+import { lookupSCF } from "@/lib/scfLookup";
 
 const Index = () => {
   const [selectedTankId, setSelectedTankId] = useState("tank-207");
@@ -56,8 +57,8 @@ const Index = () => {
   // Calculate VCF (Volume Correction Factor) from product temperature
   const vcf = lookupDensity(temperature, density);
   
-  // Shell Correction Factor (simplified - typically 1.0 at reference temp)
-  const scf = 1.0;
+  // Shell Correction Factor from lookup table based on shell temperature
+  const scf = lookupSCF(shellTemperature);
   
   // PCF (Pressure Correction Factor) - lookup from table
   const pcf = lookupPCF(pressure);
